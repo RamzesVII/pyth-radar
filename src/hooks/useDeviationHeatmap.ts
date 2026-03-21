@@ -10,8 +10,8 @@ export const DEVIATION_SYMBOLS: string[] = [
   'INJ/USD', 'PYTH/USD',
   // Forex (2)
   'EUR/USD', 'GBP/USD',
-  // Commodities (2) — BRENT/WTI excluded: no reliable real-time WS source
-  'XAU/USD', 'XAG/USD',
+  // Commodities (3)
+  'XAU/USD', 'XAG/USD', 'WTI/USD',
   // Equities (7)
   'AAPL/USD', 'MSFT/USD', 'NVDA/USD', 'TSLA/USD',
   'AMZN/USD', 'GOOGL/USD', 'META/USD',
@@ -91,6 +91,21 @@ export function useDeviationHeatmap(): Record<string, number | null> {
     }
     gateFutWs.onerror = () => gateFutWs.close()
     refs.current.push(gateFutWs)
+
+    // ── 3. OKX (WTI crude oil) ────────────────────────────────────────────────
+    const okxWs = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
+    okxWs.onopen = () => {
+      okxWs.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId: 'CL-USDT-SWAP' }] }))
+    }
+    okxWs.onmessage = (e) => {
+      try {
+        const d = JSON.parse(e.data as string)
+        const price = d.data?.[0]?.last ? parseFloat(d.data[0].last) : null
+        if (price && price > 0) set('WTI/USD', price)
+      } catch { /* ignore */ }
+    }
+    okxWs.onerror = () => okxWs.close()
+    refs.current.push(okxWs)
 
     return () => {
       refs.current.forEach(ws => ws.close())

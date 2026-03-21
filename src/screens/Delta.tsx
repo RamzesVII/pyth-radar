@@ -537,7 +537,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
           { key: 'Composite',       price: composite },
           { key: 'Gate.io',         price: tradfi.gate.price },
           { key: 'Binance Futures', price: tradfi.binanceF.price },
-          { key: 'BingX',           price: tradfi.bingx.price },
+          { key: 'OKX',             price: tradfi.okx.price },
         ]
 
     const newEvents: DivergenceEvent[] = []
@@ -558,7 +558,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
     pythPrice, ciPct,
     composite,
     cex.binance.price, cex.bybit.price, cex.gate.price, cex.bingx.price,
-    tradfi.gate.price, tradfi.binanceF.price, tradfi.bingx.price,
+    tradfi.gate.price, tradfi.binanceF.price, tradfi.okx.price,
   ])
 
   return (
@@ -688,7 +688,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                   <>
                     {tradfi.has.gate     && <SparklineRow key={asset + '-gate'}     label="Gate.io"         price={tradfi.gate.price}     pythPrice={p.price} ciPct={ciPct} connected={tradfi.gate.connected} />}
                     {tradfi.has.binanceF && <SparklineRow key={asset + '-binancef'} label="Binance Futures" price={tradfi.binanceF.price} pythPrice={p.price} ciPct={ciPct} connected={tradfi.binanceF.connected} />}
-                    {tradfi.has.bingx    && <SparklineRow key={asset + '-bingx'}    label="BingX"           price={tradfi.bingx.price}    pythPrice={p.price} ciPct={ciPct} connected={tradfi.bingx.connected} />}
+                    {tradfi.has.okx      && <SparklineRow key={asset + '-okx'}      label="OKX"             price={tradfi.okx.price}      pythPrice={p.price} ciPct={ciPct} connected={tradfi.okx.connected} />}
                   </>
                 )}
 
@@ -724,7 +724,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                   <>
                     {tradfi.has.gate     && <ExchangeChart key={asset + '-gate'}     label="Gate.io"         price={tradfi.gate.price}     pythPrice={p.price} ciPct={ciPct} connected={tradfi.gate.connected} />}
                     {tradfi.has.binanceF && <ExchangeChart key={asset + '-binancef'} label="Binance Futures" price={tradfi.binanceF.price} pythPrice={p.price} ciPct={ciPct} connected={tradfi.binanceF.connected} />}
-                    {tradfi.has.bingx    && <ExchangeChart key={asset + '-bingx'}    label="BingX"           price={tradfi.bingx.price}    pythPrice={p.price} ciPct={ciPct} connected={tradfi.bingx.connected} />}
+                    {tradfi.has.okx      && <ExchangeChart key={asset + '-okx'}      label="OKX"             price={tradfi.okx.price}      pythPrice={p.price} ciPct={ciPct} connected={tradfi.okx.connected} />}
                   </>
                 )}
               </>

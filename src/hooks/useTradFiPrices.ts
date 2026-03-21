@@ -5,33 +5,33 @@ import type { ExchangePrice } from './useCexPrices'
 interface TradFiSymbols {
   gate?:     string  // Gate.io futures
   binanceF?: string  // Binance futures (lowercase symbol)
-  bingx?:    string  // BingX perpetual
+  okx?:      string  // OKX perpetual swap (instId)
 }
 
 // Pyth symbol → per-exchange symbol mappings
 const TRADFI_MAP: Record<string, TradFiSymbols> = {
-  'XAU/USD':   { gate: 'XAU_USDT',    binanceF: 'xauusdt',  bingx: 'NCCOGOLD2USD-USDT' },
-  'XAG/USD':   { gate: 'XAG_USDT',    binanceF: 'xagusdt',  bingx: 'NCCOXAG2USD-USDT' },
+  'XAU/USD':   { gate: 'XAU_USDT',    binanceF: 'xauusdt',  okx: 'XAU-USDT-SWAP' },
+  'XAG/USD':   { gate: 'XAG_USDT',    binanceF: 'xagusdt',  okx: 'XAG-USDT-SWAP' },
+  'WTI/USD':   { okx: 'CL-USDT-SWAP' },
   'EUR/USD':   { gate: 'EURUSD_USDT' },
   'GBP/USD':   { gate: 'GBPUSD_USDT' },
-  // BRENT/WTI: BingX commodity WS not supported (100400), no reliable real-time source
-  'AAPL/USD':  { gate: 'AAPLX_USDT',  bingx: 'AAPLX-USDT' },
-  'MSFT/USD':  { gate: 'MSFT_USDT' },
-  'NVDA/USD':  { gate: 'NVDAX_USDT',  bingx: 'NVDAX-USDT' },
-  'TSLA/USD':  { gate: 'TSLAX_USDT',  binanceF: 'tslausdt', bingx: 'NCSKTSLA2USD-USDT' },
-  'AMZN/USD':  { gate: 'AMZNX_USDT',  binanceF: 'amznusdt' },
-  'GOOGL/USD': { gate: 'GOOGLX_USDT' },
-  'META/USD':  { gate: 'METAX_USDT',  bingx: 'METAX-USDT' },
+  'AAPL/USD':  { gate: 'AAPLX_USDT',  okx: 'AAPL-USDT-SWAP' },
+  'MSFT/USD':  { gate: 'MSFT_USDT',   okx: 'MSFT-USDT-SWAP' },
+  'NVDA/USD':  { gate: 'NVDAX_USDT',  okx: 'NVDA-USDT-SWAP' },
+  'TSLA/USD':  { gate: 'TSLAX_USDT',  binanceF: 'tslausdt', okx: 'TSLA-USDT-SWAP' },
+  'AMZN/USD':  { gate: 'AMZNX_USDT',  binanceF: 'amznusdt', okx: 'AMZN-USDT-SWAP' },
+  'GOOGL/USD': { gate: 'GOOGLX_USDT', okx: 'GOOGL-USDT-SWAP' },
+  'META/USD':  { gate: 'METAX_USDT',  okx: 'META-USDT-SWAP' },
 }
 
 export interface TradFiPrices {
   gate:      ExchangePrice
   binanceF:  ExchangePrice
-  bingx:     ExchangePrice
+  okx:       ExchangePrice
   composite: number | null
   supported: boolean
   // which exchanges actually cover this symbol
-  has: { gate: boolean; binanceF: boolean; bingx: boolean }
+  has: { gate: boolean; binanceF: boolean; okx: boolean }
 }
 
 // ── Gate.io futures ───────────────────────────────────────────────────────────
@@ -81,39 +81,20 @@ function makeBinanceFutWs(
   return ws
 }
 
-// ── BingX (GZIP-compressed messages) ─────────────────────────────────────────
-function makeBingXWs(
-  symbol: string,
+// ── OKX perpetual swaps ────────────────────────────────────────────────────────
+function makeOkxWs(
+  instId: string,
   setState: React.Dispatch<React.SetStateAction<ExchangePrice>>,
 ): WebSocket {
-  const ws = new WebSocket('wss://open-api-ws.bingx.com/market')
+  const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
   ws.onopen = () => {
     setState({ price: null, connected: true })
-    ws.send(JSON.stringify({
-      id:       Math.random().toString(36).slice(2),
-      reqType:  'sub',
-      dataType: `${symbol}@lastPrice`,
-    }))
+    ws.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId }] }))
   }
-  ws.onmessage = async (e) => {
+  ws.onmessage = (e) => {
     try {
-      let text: string
-      if (e.data instanceof Blob) {
-        const buf = await e.data.arrayBuffer()
-        const ds  = new DecompressionStream('gzip')
-        const writer = ds.writable.getWriter()
-        writer.write(new Uint8Array(buf))
-        writer.close()
-        text = await new Response(ds.readable).text()
-      } else {
-        text = e.data as string
-      }
-      const d = JSON.parse(text)
-      // respond to keepalive ping
-      if (d.ping) { ws.send(JSON.stringify({ pong: d.ping })); return }
-      // price can be nested or at root depending on stream type
-      const raw = d.data?.lastPrice ?? d.lastPrice ?? d.data?.c ?? d.c
-      const price = raw ? parseFloat(raw) : null
+      const d = JSON.parse(e.data as string)
+      const price = d.data?.[0]?.last ? parseFloat(d.data[0].last) : null
       if (price != null && !isNaN(price) && price > 0) setState({ price, connected: true })
     } catch { /* ignore */ }
   }
@@ -130,7 +111,7 @@ export function useTradFiPrices(symbol: string): TradFiPrices {
 
   const [gate,     setGate]     = useState<ExchangePrice>(EMPTY)
   const [binanceF, setBinanceF] = useState<ExchangePrice>(EMPTY)
-  const [bingx,    setBingX]    = useState<ExchangePrice>(EMPTY)
+  const [okx,      setOkx]      = useState<ExchangePrice>(EMPTY)
   const refs = useRef<WebSocket[]>([])
 
   useEffect(() => {
@@ -141,23 +122,23 @@ export function useTradFiPrices(symbol: string): TradFiPrices {
 
     if (syms.gate)     refs.current.push(makeGateFutWs   (syms.gate,     setGate))
     if (syms.binanceF) refs.current.push(makeBinanceFutWs(syms.binanceF, setBinanceF))
-    if (syms.bingx)    refs.current.push(makeBingXWs     (syms.bingx,    setBingX))
+    if (syms.okx)      refs.current.push(makeOkxWs       (syms.okx,      setOkx))
 
     return () => { refs.current.forEach(ws => ws.close()) }
   }, [symbol, supported]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const prices = [gate.price, binanceF.price, bingx.price]
+  const prices = [gate.price, binanceF.price, okx.price]
     .filter((p): p is number => p !== null)
   const composite = prices.length > 0
     ? prices.reduce((a, b) => a + b, 0) / prices.length
     : null
 
   return {
-    gate, binanceF, bingx, composite, supported,
+    gate, binanceF, okx, composite, supported,
     has: {
       gate:     !!syms?.gate,
       binanceF: !!syms?.binanceF,
-      bingx:    !!syms?.bingx,
+      okx:      !!syms?.okx,
     },
   }
 }
