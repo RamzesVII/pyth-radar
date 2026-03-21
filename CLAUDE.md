@@ -96,3 +96,14 @@ Custom CSS classes in `src/index.css` (not Tailwind utilities):
 - **No external script loading.** Do not add `<script src="...">` tags or dynamic `import()` from untrusted URLs.
 - **DecompressionStream is browser-native** — do not replace it with a third-party decompression library unless absolutely necessary (avoids supply-chain risk).
 - **`// eslint-disable` comments** are acceptable only for `@typescript-eslint/no-explicit-any` on WebSocket message handlers where the data shape is unknown. Do not disable security-relevant rules.
+
+## Playwright MCP (browser testing)
+
+Playwright MCP is configured globally in `~/.claude/mcp.json`. It lets Claude control a real browser for UI testing.
+
+**Rules:**
+- **Only navigate to `localhost:5173`** (the Vite dev server). Never visit external URLs during tests.
+- **No form submissions or destructive interactions** — testing is read-only observation of the running app.
+- **Run `npm run dev` first** before invoking any Playwright tool — the server must be up.
+- **Do not persist browser state** between sessions (no cookies/localStorage that would affect subsequent tests).
+- Screenshots are fine for debugging — do not upload them to any external service.

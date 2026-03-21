@@ -1,8 +1,12 @@
 import { useState } from 'react'
-import { usePythPrices, HISTORICAL_CI } from '../hooks/usePythPrices'
-import { useDeviationHeatmap, DEVIATION_TABS, filterByTab } from '../hooks/useDeviationHeatmap'
+import { HISTORICAL_CI } from '../hooks/usePythPrices'
+import type { PythPrice } from '../hooks/usePythPrices'
+import { DEVIATION_TABS, filterByTab } from '../hooks/useDeviationHeatmap'
 
 interface Props {
+  prices:        Record<string, PythPrice>
+  connected:     boolean
+  marketPrices:  Record<string, number | null>
   onSelectAsset: (asset: string) => void
 }
 
@@ -15,9 +19,7 @@ function getCell(ratio: number) {
   return             { bg: 'bg-red-500/20',      border: 'border-red-500/35',     text: 'text-red-400',    label: 'Far outside' }
 }
 
-export default function Heatmap({ onSelectAsset }: Props) {
-  const { prices, connected }  = usePythPrices()
-  const marketPrices           = useDeviationHeatmap()
+export default function Heatmap({ prices, connected, marketPrices, onSelectAsset }: Props) {
   const [tab, setTab]          = useState('All')
   const [hovered, setHovered]  = useState<string | null>(null)
 

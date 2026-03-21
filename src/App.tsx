@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import FearIndex from './screens/FearIndex'
+import { usePythPrices } from './hooks/usePythPrices'
+import { useDeviationHeatmap } from './hooks/useDeviationHeatmap'
+import DeviationIndex from './screens/DeviationIndex'
 import Heatmap from './screens/Heatmap'
 import Delta from './screens/Delta'
 import pythLogo from './assets/pyth-logo-dark.svg'
@@ -14,8 +16,12 @@ const NAV_ITEMS: { id: Screen; label: string; icon: string }[] = [
 ]
 
 function App() {
-  const [screen, setScreen] = useState<Screen>('fear')
+  const [screen, setScreen]           = useState<Screen>('fear')
   const [selectedAsset, setSelectedAsset] = useState<string>('BTC/USD')
+
+  // Single instances — shared across all screens
+  const { prices, connected } = usePythPrices()
+  const marketPrices          = useDeviationHeatmap()
 
   const openDelta = (asset: string) => {
     setSelectedAsset(asset)
@@ -55,16 +61,17 @@ function App() {
 
         {/* Status dot */}
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-          Live
+          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
+            style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}} />
+          {connected ? 'Live' : 'Connecting…'}
         </div>
       </nav>
 
       {/* Content */}
       <div className="pt-14">
-        {screen === 'fear'    && <FearIndex onOpenHeatmap={() => setScreen('heatmap')} />}
-        {screen === 'heatmap' && <Heatmap onSelectAsset={openDelta} />}
-        {screen === 'delta'   && <Delta asset={selectedAsset} />}
+        {screen === 'fear'    && <DeviationIndex prices={prices} connected={connected} marketPrices={marketPrices} onOpenHeatmap={() => setScreen('heatmap')} />}
+        {screen === 'heatmap' && <Heatmap   prices={prices} connected={connected} marketPrices={marketPrices} onSelectAsset={openDelta} />}
+        {screen === 'delta'   && <Delta     asset={selectedAsset} prices={prices} pythConnected={connected} />}
       </div>
     </div>
   )
