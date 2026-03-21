@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import type React from 'react'
+import { useEffect, useState } from 'react'
 import type { ExchangePrice } from './useCexPrices'
 
 interface TradFiSymbols {
@@ -34,75 +33,6 @@ export interface TradFiPrices {
   has: { gate: boolean; binanceF: boolean; okx: boolean }
 }
 
-// ── Gate.io futures ───────────────────────────────────────────────────────────
-function makeGateFutWs(
-  symbol: string,
-  setState: React.Dispatch<React.SetStateAction<ExchangePrice>>,
-): WebSocket {
-  const ws = new WebSocket('wss://fx-ws.gateio.ws/v4/ws/usdt')
-  ws.onopen = () => {
-    setState({ price: null, connected: true })
-    ws.send(JSON.stringify({
-      time:    Math.floor(Date.now() / 1000),
-      channel: 'futures.tickers',
-      event:   'subscribe',
-      payload: [symbol],
-    }))
-  }
-  ws.onmessage = (e) => {
-    try {
-      const d = JSON.parse(e.data)
-      const item  = Array.isArray(d.result) ? d.result[0] : d.result
-      const price = item?.last ? parseFloat(item.last) : null
-      if (price != null && !isNaN(price) && price > 0) setState({ price, connected: true })
-    } catch { /* ignore */ }
-  }
-  ws.onerror = () => ws.close()
-  ws.onclose = () => setState(prev => ({ ...prev, connected: false }))
-  return ws
-}
-
-// ── Binance futures ───────────────────────────────────────────────────────────
-function makeBinanceFutWs(
-  symbol: string,
-  setState: React.Dispatch<React.SetStateAction<ExchangePrice>>,
-): WebSocket {
-  const ws = new WebSocket(`wss://fstream.binance.com/ws/${symbol}@ticker`)
-  ws.onopen = () => setState({ price: null, connected: true })
-  ws.onmessage = (e) => {
-    try {
-      const d = JSON.parse(e.data)
-      const price = d.c ? parseFloat(d.c) : null
-      if (price != null && !isNaN(price) && price > 0) setState({ price, connected: true })
-    } catch { /* ignore */ }
-  }
-  ws.onerror = () => ws.close()
-  ws.onclose = () => setState(prev => ({ ...prev, connected: false }))
-  return ws
-}
-
-// ── OKX perpetual swaps ────────────────────────────────────────────────────────
-function makeOkxWs(
-  instId: string,
-  setState: React.Dispatch<React.SetStateAction<ExchangePrice>>,
-): WebSocket {
-  const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
-  ws.onopen = () => {
-    setState({ price: null, connected: true })
-    ws.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId }] }))
-  }
-  ws.onmessage = (e) => {
-    try {
-      const d = JSON.parse(e.data as string)
-      const price = d.data?.[0]?.last ? parseFloat(d.data[0].last) : null
-      if (price != null && !isNaN(price) && price > 0) setState({ price, connected: true })
-    } catch { /* ignore */ }
-  }
-  ws.onerror = () => ws.close()
-  ws.onclose = () => setState(prev => ({ ...prev, connected: false }))
-  return ws
-}
-
 const EMPTY: ExchangePrice = { price: null, connected: false }
 
 export function useTradFiPrices(symbol: string): TradFiPrices {
@@ -112,19 +42,91 @@ export function useTradFiPrices(symbol: string): TradFiPrices {
   const [gate,     setGate]     = useState<ExchangePrice>(EMPTY)
   const [binanceF, setBinanceF] = useState<ExchangePrice>(EMPTY)
   const [okx,      setOkx]      = useState<ExchangePrice>(EMPTY)
-  const refs = useRef<WebSocket[]>([])
 
   useEffect(() => {
-    refs.current.forEach(ws => ws.close())
-    refs.current = []
-
     if (!syms) return
 
-    if (syms.gate)     refs.current.push(makeGateFutWs   (syms.gate,     setGate))
-    if (syms.binanceF) refs.current.push(makeBinanceFutWs(syms.binanceF, setBinanceF))
-    if (syms.okx)      refs.current.push(makeOkxWs       (syms.okx,      setOkx))
+    let cancelled = false
+    let gateWs:    WebSocket | null = null
+    let binanceFWs: WebSocket | null = null
+    let okxWs:     WebSocket | null = null
+    let gD = 1000, bD = 1000, oD = 1000
+    let gT: ReturnType<typeof setTimeout> | null = null
+    let bT: ReturnType<typeof setTimeout> | null = null
+    let oT: ReturnType<typeof setTimeout> | null = null
 
-    return () => { refs.current.forEach(ws => ws.close()) }
+    const connectGate = (sym: string) => {
+      const ws = new WebSocket('wss://fx-ws.gateio.ws/v4/ws/usdt')
+      gateWs = ws
+      ws.onopen = () => {
+        gD = 1000
+        setGate({ price: null, connected: true })
+        ws.send(JSON.stringify({ time: Math.floor(Date.now() / 1000), channel: 'futures.tickers', event: 'subscribe', payload: [sym] }))
+      }
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          const item = Array.isArray(d.result) ? d.result[0] : d.result
+          const price = item?.last ? parseFloat(item.last) : null
+          if (price != null && !isNaN(price) && price > 0) setGate({ price, connected: true })
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => {
+        setGate(prev => ({ ...prev, connected: false }))
+        if (!cancelled) { gT = setTimeout(() => connectGate(sym), gD); gD = Math.min(gD * 2, 30_000) }
+      }
+    }
+
+    const connectBinanceF = (sym: string) => {
+      const ws = new WebSocket(`wss://fstream.binance.com/ws/${sym}@ticker`)
+      binanceFWs = ws
+      ws.onopen = () => { bD = 1000; setBinanceF({ price: null, connected: true }) }
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          const price = d.c ? parseFloat(d.c) : null
+          if (price != null && !isNaN(price) && price > 0) setBinanceF({ price, connected: true })
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => {
+        setBinanceF(prev => ({ ...prev, connected: false }))
+        if (!cancelled) { bT = setTimeout(() => connectBinanceF(sym), bD); bD = Math.min(bD * 2, 30_000) }
+      }
+    }
+
+    const connectOkx = (instId: string) => {
+      const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
+      okxWs = ws
+      ws.onopen = () => {
+        oD = 1000
+        setOkx({ price: null, connected: true })
+        ws.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId }] }))
+      }
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data as string)
+          const price = d.data?.[0]?.last ? parseFloat(d.data[0].last) : null
+          if (price != null && !isNaN(price) && price > 0) setOkx({ price, connected: true })
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => {
+        setOkx(prev => ({ ...prev, connected: false }))
+        if (!cancelled) { oT = setTimeout(() => connectOkx(instId), oD); oD = Math.min(oD * 2, 30_000) }
+      }
+    }
+
+    if (syms.gate)     connectGate(syms.gate)
+    if (syms.binanceF) connectBinanceF(syms.binanceF)
+    if (syms.okx)      connectOkx(syms.okx)
+
+    return () => {
+      cancelled = true
+      ;[gT, bT, oT].forEach(t => t && clearTimeout(t))
+      gateWs?.close(); binanceFWs?.close(); okxWs?.close()
+    }
   }, [symbol, supported]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const prices = [gate.price, binanceF.price, okx.price]
@@ -135,10 +137,6 @@ export function useTradFiPrices(symbol: string): TradFiPrices {
 
   return {
     gate, binanceF, okx, composite, supported,
-    has: {
-      gate:     !!syms?.gate,
-      binanceF: !!syms?.binanceF,
-      okx:      !!syms?.okx,
-    },
+    has: { gate: !!syms?.gate, binanceF: !!syms?.binanceF, okx: !!syms?.okx },
   }
 }

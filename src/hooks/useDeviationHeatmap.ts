@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FEED_CATEGORY } from './usePythPrices'
 
 // Curated shortlist — assets with independent market data for deviation
@@ -48,68 +48,86 @@ const GATE_FUT_MAP: Record<string, string> = {
 // Returns composite market price per symbol (null = not yet received)
 export function useDeviationHeatmap(): Record<string, number | null> {
   const [prices, setPrices] = useState<Record<string, number | null>>({})
-  const refs = useRef<WebSocket[]>([])
 
   useEffect(() => {
     const set = (symbol: string, price: number) =>
       setPrices(prev => ({ ...prev, [symbol]: price }))
 
-    // ── 1. Binance combined stream ────────────────────────────────────────────
-    const streams = Object.keys(BINANCE_MAP).map(s => `${s}@ticker`).join('/')
-    const binWs = new WebSocket(`wss://stream.binance.com/stream?streams=${streams}`)
-    binWs.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data)
-        const name   = (msg.stream as string)?.replace('@ticker', '')
-        const symbol = name ? BINANCE_MAP[name] : null
-        const price  = msg.data?.c ? parseFloat(msg.data.c) : null
-        if (symbol && price && price > 0) set(symbol, price)
-      } catch { /* ignore */ }
-    }
-    binWs.onerror = () => binWs.close()
-    refs.current.push(binWs)
+    let cancelled = false
+    let binWs:    WebSocket | null = null
+    let gateWs:   WebSocket | null = null
+    let okxWs:    WebSocket | null = null
+    let binD = 1000, gD = 1000, oD = 1000
+    let binT: ReturnType<typeof setTimeout> | null = null
+    let gT:   ReturnType<typeof setTimeout> | null = null
+    let oT:   ReturnType<typeof setTimeout> | null = null
 
-    // ── 2. Gate.io futures (single WS, 11 TradFi symbols) ────────────────────
-    const gateFutWs = new WebSocket('wss://fx-ws.gateio.ws/v4/ws/usdt')
-    gateFutWs.onopen = () => {
-      gateFutWs.send(JSON.stringify({
-        time:    Math.floor(Date.now() / 1000),
-        channel: 'futures.tickers',
-        event:   'subscribe',
-        payload: Object.keys(GATE_FUT_MAP),
-      }))
+    // ── 1. Binance combined stream ────────────────────────────────────────────
+    const connectBinance = () => {
+      const streams = Object.keys(BINANCE_MAP).map(s => `${s}@ticker`).join('/')
+      const ws = new WebSocket(`wss://stream.binance.com/stream?streams=${streams}`)
+      binWs = ws
+      ws.onopen = () => { binD = 1000 }
+      ws.onmessage = (e) => {
+        try {
+          const msg    = JSON.parse(e.data)
+          const name   = (msg.stream as string)?.replace('@ticker', '')
+          const symbol = name ? BINANCE_MAP[name] : null
+          const price  = msg.data?.c ? parseFloat(msg.data.c) : null
+          if (symbol && price && price > 0) set(symbol, price)
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => { if (!cancelled) { binT = setTimeout(connectBinance, binD); binD = Math.min(binD * 2, 30_000) } }
     }
-    gateFutWs.onmessage = (e) => {
-      try {
-        const d        = JSON.parse(e.data)
-        const item     = Array.isArray(d.result) ? d.result[0] : d.result
-        const contract = item?.contract as string | undefined
-        const symbol   = contract ? GATE_FUT_MAP[contract] : null
-        const price    = item?.last ? parseFloat(item.last) : null
-        if (symbol && price && price > 0) set(symbol, price)
-      } catch { /* ignore */ }
+
+    // ── 2. Gate.io futures ────────────────────────────────────────────────────
+    const connectGate = () => {
+      const ws = new WebSocket('wss://fx-ws.gateio.ws/v4/ws/usdt')
+      gateWs = ws
+      ws.onopen = () => {
+        gD = 1000
+        ws.send(JSON.stringify({ time: Math.floor(Date.now() / 1000), channel: 'futures.tickers', event: 'subscribe', payload: Object.keys(GATE_FUT_MAP) }))
+      }
+      ws.onmessage = (e) => {
+        try {
+          const d        = JSON.parse(e.data)
+          const item     = Array.isArray(d.result) ? d.result[0] : d.result
+          const contract = item?.contract as string | undefined
+          const symbol   = contract ? GATE_FUT_MAP[contract] : null
+          const price    = item?.last ? parseFloat(item.last) : null
+          if (symbol && price && price > 0) set(symbol, price)
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => { if (!cancelled) { gT = setTimeout(connectGate, gD); gD = Math.min(gD * 2, 30_000) } }
     }
-    gateFutWs.onerror = () => gateFutWs.close()
-    refs.current.push(gateFutWs)
 
     // ── 3. OKX (WTI crude oil) ────────────────────────────────────────────────
-    const okxWs = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
-    okxWs.onopen = () => {
-      okxWs.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId: 'CL-USDT-SWAP' }] }))
+    const connectOkx = () => {
+      const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
+      okxWs = ws
+      ws.onopen = () => {
+        oD = 1000
+        ws.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId: 'CL-USDT-SWAP' }] }))
+      }
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data as string)
+          const price = d.data?.[0]?.last ? parseFloat(d.data[0].last) : null
+          if (price && price > 0) set('WTI/USD', price)
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => { if (!cancelled) { oT = setTimeout(connectOkx, oD); oD = Math.min(oD * 2, 30_000) } }
     }
-    okxWs.onmessage = (e) => {
-      try {
-        const d = JSON.parse(e.data as string)
-        const price = d.data?.[0]?.last ? parseFloat(d.data[0].last) : null
-        if (price && price > 0) set('WTI/USD', price)
-      } catch { /* ignore */ }
-    }
-    okxWs.onerror = () => okxWs.close()
-    refs.current.push(okxWs)
+
+    connectBinance(); connectGate(); connectOkx()
 
     return () => {
-      refs.current.forEach(ws => ws.close())
-      refs.current = []
+      cancelled = true
+      ;[binT, gT, oT].forEach(t => t && clearTimeout(t))
+      binWs?.close(); gateWs?.close(); okxWs?.close()
     }
   }, [])
 

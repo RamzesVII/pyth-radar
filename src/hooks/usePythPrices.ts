@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface PythPrice {
   id: string
@@ -122,48 +122,65 @@ export const FEED_CATEGORY: Record<string, string> = {
 
 const HERMES_WS = 'wss://hermes.pyth.network/ws'
 
+// O(1) reverse lookup built once at module load
+const ID_TO_SYMBOL: Record<string, string> = Object.fromEntries(
+  Object.entries(PYTH_FEEDS).map(([sym, id]) => [id, sym])
+)
+
 export function usePythPrices() {
   const [prices, setPrices] = useState<Record<string, PythPrice>>({})
   const [connected, setConnected] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
     const feedIds = Object.values(PYTH_FEEDS).filter(id => /^[0-9a-f]{64}$/.test(id))
-    const ws = new WebSocket(HERMES_WS)
-    wsRef.current = ws
+    let delay    = 1000
+    let timer:   ReturnType<typeof setTimeout> | null = null
+    let ws:      WebSocket | null = null
+    let cancelled = false
 
-    ws.onopen = () => {
-      setConnected(true)
-      ws.send(JSON.stringify({ ids: feedIds, type: 'subscribe', parsed: true }))
+    const connect = () => {
+      ws = new WebSocket(HERMES_WS)
+      ws.onopen = () => {
+        delay = 1000
+        setConnected(true)
+        ws!.send(JSON.stringify({ ids: feedIds, type: 'subscribe', parsed: true }))
+      }
+      ws.onerror = () => ws!.close()
+      ws.onclose = () => {
+        setConnected(false)
+        if (!cancelled) {
+          timer = setTimeout(connect, delay)
+          delay = Math.min(delay * 2, 30_000)
+        }
+      }
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.type !== 'price_update') return
+          const feed = data.price_feed
+          if (!feed) return
+          const id     = feed.id as string
+          const symbol = ID_TO_SYMBOL[id]
+          if (!symbol) return
+          const p     = feed.price
+          const expo  = p.expo as number
+          const price = parseFloat(p.price) * Math.pow(10, expo)
+          const conf  = parseFloat(p.conf)  * Math.pow(10, expo)
+          if (!price || price <= 0) return
+          setPrices(prev => ({
+            ...prev,
+            [symbol]: { id, symbol, price, conf, expo, publishTime: p.publish_time as number },
+          }))
+        } catch { /* ignore */ }
+      }
     }
-    ws.onerror = () => ws.close()
-    ws.onclose = () => setConnected(false)
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        if (data.type !== 'price_update') return
-        const feed = data.price_feed
-        if (!feed) return
-
-        const id     = feed.id as string
-        const symbol = Object.entries(PYTH_FEEDS).find(([, v]) => v === id)?.[0]
-        if (!symbol) return
-
-        const p     = feed.price
-        const expo  = p.expo as number
-        const price = parseFloat(p.price) * Math.pow(10, expo)
-        const conf  = parseFloat(p.conf)  * Math.pow(10, expo)
-        if (!price || price <= 0) return
-
-        setPrices(prev => ({
-          ...prev,
-          [symbol]: { id, symbol, price, conf, expo, publishTime: p.publish_time as number },
-        }))
-      } catch { /* ignore */ }
+    connect()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+      ws?.close()
     }
-
-    return () => ws.close()
   }, [])
 
   return { prices, connected }
