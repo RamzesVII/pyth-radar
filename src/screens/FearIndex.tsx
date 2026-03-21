@@ -42,7 +42,7 @@ export default function FearIndex({ onOpenHeatmap }: Props) {
       {/* Main gauge card */}
       <div className={`glass-strong ${level.glow} relative flex flex-col items-center px-16 py-12 mb-8 min-w-[340px]`}>
         <p className="text-slate-400 text-xs uppercase tracking-widest mb-6 font-medium">
-          Oracle Stress Index
+          Deviation Index
         </p>
 
         {/* Score ring */}
@@ -74,7 +74,7 @@ export default function FearIndex({ onOpenHeatmap }: Props) {
       {/* Asset mini-grid */}
       {assets.length > 0 && (
         <div className="w-full max-w-2xl">
-          <p className="text-slate-600 text-xs uppercase tracking-widest mb-3 text-center">Live Confidence Intervals</p>
+          <p className="text-slate-600 text-xs uppercase tracking-widest mb-3 text-center">Oracle Confidence · CI Stress</p>
           <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
             {assets.slice(0, 14).map(p => {
               const ciPct = (p.conf / p.price) * 100
@@ -109,7 +109,7 @@ export default function FearIndex({ onOpenHeatmap }: Props) {
         onClick={onOpenHeatmap}
         className="mt-8 flex items-center gap-2 text-sm text-slate-400 hover:text-purple-300 transition-colors group"
       >
-        View full heatmap
+        View Deviation Heatmap
         <span className="group-hover:translate-x-0.5 transition-transform">→</span>
       </button>
     </div>

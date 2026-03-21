@@ -29,8 +29,8 @@ export default function Heatmap({ onSelectAsset }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-xl font-semibold text-slate-100">Confidence Heatmap</h1>
-            <p className="text-slate-500 text-sm mt-1">CI width vs historical average · click any asset to inspect</p>
+            <h1 className="text-xl font-semibold text-slate-100">Deviation Heatmap</h1>
+            <p className="text-slate-500 text-sm mt-1">Market deviation from Pyth benchmark · oracle confidence overlay · click to inspect</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
@@ -123,7 +123,7 @@ export default function Heatmap({ onSelectAsset }: Props) {
         </div>
 
         <p className="text-center text-slate-600 text-xs mt-8">
-          Click any asset to open Pyth Delta →
+          Click any asset to inspect deviation in Pyth Delta →
         </p>
       </div>
     </div>

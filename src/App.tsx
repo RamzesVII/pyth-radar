@@ -8,9 +8,9 @@ import pythSymbol from './assets/pyth-logo-symbol-dark.svg'
 export type Screen = 'fear' | 'heatmap' | 'delta'
 
 const NAV_ITEMS: { id: Screen; label: string; icon: string }[] = [
-  { id: 'fear',    label: 'Fear Index', icon: '◎' },
-  { id: 'heatmap', label: 'Heatmap',    icon: '▦' },
-  { id: 'delta',   label: 'Delta',      icon: '∆' },
+  { id: 'fear',    label: 'Overview',  icon: '◎' },
+  { id: 'heatmap', label: 'Heatmap',   icon: '▦' },
+  { id: 'delta',   label: 'Delta',     icon: '∆' },
 ]
 
 function App() {

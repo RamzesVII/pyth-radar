@@ -16,7 +16,7 @@ export default function Delta({ asset }: Props) {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-xl font-semibold text-slate-100">Pyth Delta — <span className="text-purple-400">{asset}</span></h1>
-            <p className="text-slate-500 text-sm mt-1">Pyth oracle vs composite CEX price · real-time divergence</p>
+            <p className="text-slate-500 text-sm mt-1">Pyth benchmark vs market prices · real-time deviation</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
@@ -29,7 +29,7 @@ export default function Delta({ asset }: Props) {
         {p && (
           <div className="glass-strong glow-purple p-6 mb-6 flex items-center justify-between">
             <div>
-              <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Pyth Oracle Price</p>
+              <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Pyth Benchmark Price</p>
               <p className="text-4xl font-bold text-slate-100">
                 ${p.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
