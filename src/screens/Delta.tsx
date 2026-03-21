@@ -1,5 +1,6 @@
-import { usePythPrices } from '../hooks/usePythPrices'
+import { usePythPrices, FEED_CATEGORY } from '../hooks/usePythPrices'
 import { useCexPrices } from '../hooks/useCexPrices'
+import { useTradFiPrices } from '../hooks/useTradFiPrices'
 
 interface Props {
   asset: string
@@ -49,15 +50,26 @@ function ExchangeRow({ name, price, pythPrice, connected }: ExchangeRowProps) {
 
 export default function Delta({ asset }: Props) {
   const { prices, connected: pythConnected } = usePythPrices()
-  const cex = useCexPrices(asset)
-  const p = prices[asset]
+  const cex    = useCexPrices(asset)
+  const tradfi = useTradFiPrices(asset)
+  const p      = prices[asset]
 
-  const compositeDelta = p && cex.composite != null
-    ? ((cex.composite - p.price) / p.price) * 100
+  const category = FEED_CATEGORY[asset] ?? 'Crypto'
+  const isCrypto = category === 'Crypto'
+
+  // Use the right composite depending on asset class
+  const composite      = isCrypto ? cex.composite : tradfi.composite
+  const compositeDelta = p && composite != null
+    ? ((composite - p.price) / p.price) * 100
     : null
 
-  const ciPct = p ? (p.conf / p.price) * 100 : null
+  const ciPct    = p ? (p.conf / p.price) * 100 : null
   const withinCI = compositeDelta != null && ciPct != null && Math.abs(compositeDelta) < ciPct
+
+  // Which exchanges have rows to show for this asset
+  const showCrypto  = isCrypto && cex.supported
+  const showTradFi  = !isCrypto && tradfi.supported
+  const hasAnyMarket = showCrypto || showTradFi
 
   return (
     <div className="min-h-[calc(100vh-56px)] px-6 py-10">
@@ -98,7 +110,7 @@ export default function Delta({ asset }: Props) {
 
             {/* Composite delta summary */}
             {compositeDelta != null && (
-              <div className={`mt-5 pt-5 border-t border-slate-700/50 flex items-center justify-between`}>
+              <div className="mt-5 pt-5 border-t border-slate-700/50 flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-xs uppercase tracking-widest mb-0.5">Market Deviation</p>
                   <p className={`text-2xl font-bold font-mono ${
@@ -124,28 +136,41 @@ export default function Delta({ asset }: Props) {
           </div>
         )}
 
-        {/* CEX comparison */}
-        {cex.supported ? (
+        {/* Exchange comparison */}
+        {hasAnyMarket ? (
           <div className="glass p-6 mb-4">
             <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-medium">Exchange Prices</p>
             <p className="text-slate-600 text-xs mb-4">Δ = deviation from Pyth benchmark · green = market below benchmark</p>
-            <div>
-              {p && <>
+
+            {/* Crypto rows */}
+            {showCrypto && p && (
+              <div>
                 <ExchangeRow name="Binance" price={cex.binance.price} pythPrice={p.price} connected={cex.binance.connected} />
                 <ExchangeRow name="Bybit"   price={cex.bybit.price}   pythPrice={p.price} connected={cex.bybit.connected} />
                 <ExchangeRow name="Gate.io" price={cex.gate.price}    pythPrice={p.price} connected={cex.gate.connected} />
-                <ExchangeRow name="MEXC"    price={cex.mexc.price}    pythPrice={p.price} connected={cex.mexc.connected} />
-              </>}
-            </div>
-            {p && cex.composite != null && (
+                <ExchangeRow name="BingX"   price={cex.bingx.price}   pythPrice={p.price} connected={cex.bingx.connected} />
+              </div>
+            )}
+
+            {/* TradFi rows — only show exchanges that cover this specific asset */}
+            {showTradFi && p && (
+              <div>
+                {tradfi.has.gate     && <ExchangeRow name="Gate.io" price={tradfi.gate.price}     pythPrice={p.price} connected={tradfi.gate.connected} />}
+                {tradfi.has.binanceF && <ExchangeRow name="Binance" price={tradfi.binanceF.price} pythPrice={p.price} connected={tradfi.binanceF.connected} />}
+                {tradfi.has.bingx    && <ExchangeRow name="BingX"   price={tradfi.bingx.price}    pythPrice={p.price} connected={tradfi.bingx.connected} />}
+              </div>
+            )}
+
+            {/* Composite row */}
+            {p && composite != null && compositeDelta != null && (
               <div className="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between">
                 <span className="text-slate-300 text-sm font-semibold">Composite</span>
                 <div className="flex items-center gap-6">
-                  <span className="text-slate-200 text-sm font-mono font-semibold">${fmt(cex.composite)}</span>
+                  <span className="text-slate-200 text-sm font-mono font-semibold">${fmt(composite)}</span>
                   <span className={`text-sm font-mono font-semibold w-20 text-right ${
-                    compositeDelta! > 0 ? 'text-red-400' : 'text-emerald-400'
+                    compositeDelta > 0 ? 'text-red-400' : 'text-emerald-400'
                   }`}>
-                    {compositeDelta! > 0 ? '+' : ''}{compositeDelta!.toFixed(4)}%
+                    {compositeDelta > 0 ? '+' : ''}{compositeDelta.toFixed(4)}%
                   </span>
                 </div>
               </div>
@@ -155,8 +180,7 @@ export default function Delta({ asset }: Props) {
           <div className="glass p-6 mb-4">
             <p className="text-slate-400 text-xs uppercase tracking-widest mb-2 font-medium">Exchange Prices</p>
             <p className="text-slate-600 text-sm">
-              CEX comparison available for crypto assets only.
-              Forex, commodities and equities use Pyth as the primary source.
+              No independent market data available for this asset.
             </p>
           </div>
         )}

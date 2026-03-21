@@ -10,7 +10,7 @@ export interface CexPrices {
   binance: ExchangePrice
   bybit:   ExchangePrice
   gate:    ExchangePrice
-  mexc:    ExchangePrice
+  bingx:   ExchangePrice
   composite: number | null
   supported: boolean // false for Forex/Commodities/Equities
 }
@@ -58,22 +58,23 @@ export function useCexPrices(symbol: string): CexPrices {
   const [binance, setBinance] = useState<ExchangePrice>({ price: null, connected: false })
   const [bybit,   setBybit]   = useState<ExchangePrice>({ price: null, connected: false })
   const [gate,    setGate]    = useState<ExchangePrice>({ price: null, connected: false })
-  const [mexc,    setMexc]    = useState<ExchangePrice>({ price: null, connected: false })
+  const [bingx,   setBingX]   = useState<ExchangePrice>({ price: null, connected: false })
   const refs = useRef<WebSocket[]>([])
 
   useEffect(() => {
     refs.current.forEach(ws => ws.close())
     refs.current = []
     setBinance({ price: null, connected: false })
-    setBybit({ price: null, connected: false })
-    setGate({ price: null, connected: false })
-    setMexc({ price: null, connected: false })
+    setBybit  ({ price: null, connected: false })
+    setGate   ({ price: null, connected: false })
+    setBingX  ({ price: null, connected: false })
 
     if (!supported || !base) return
 
-    const sym   = `${base}USDT`
-    const symLo = sym.toLowerCase()
-    const gSym  = `${base}_USDT`
+    const sym      = `${base}USDT`
+    const symLo    = sym.toLowerCase()
+    const gSym     = `${base}_USDT`
+    const bingxSym = `${base}-USDT`   // BingX uses hyphenated format
 
     // Binance
     refs.current.push(makeWs(
@@ -104,25 +105,48 @@ export function useCexPrices(symbol: string): CexPrices {
       setGate,
     ))
 
-    // MEXC
-    refs.current.push(makeWs(
-      'wss://wbs.mexc.com/ws',
-      (ws) => ws.send(JSON.stringify({
-        method: 'SUBSCRIPTION',
-        params: [`spot@public.miniTicker.v3.api@${sym}`],
-      })),
-      (d) => d.d?.p ? parseFloat(d.d.p) : null,
-      setMexc,
-    ))
+    // BingX — GZIP-compressed, needs async handler
+    const bingxWs = new WebSocket('wss://open-api-ws.bingx.com/market')
+    bingxWs.onopen = () => {
+      setBingX({ price: null, connected: true })
+      bingxWs.send(JSON.stringify({
+        id:       Math.random().toString(36).slice(2),
+        reqType:  'sub',
+        dataType: `${bingxSym}@lastPrice`,
+      }))
+    }
+    bingxWs.onmessage = async (e) => {
+      try {
+        let text: string
+        if (e.data instanceof Blob) {
+          const buf    = await e.data.arrayBuffer()
+          const ds     = new DecompressionStream('gzip')
+          const writer = ds.writable.getWriter()
+          writer.write(new Uint8Array(buf))
+          writer.close()
+          text = await new Response(ds.readable).text()
+        } else {
+          text = e.data as string
+        }
+        const d = JSON.parse(text)
+        if (d.ping) { bingxWs.send(JSON.stringify({ pong: d.ping })); return }
+        const raw   = d.data?.lastPrice ?? d.lastPrice ?? d.data?.c ?? d.c
+        const price = raw ? parseFloat(raw) : null
+        if (price != null && !isNaN(price) && price > 0) setBingX({ price, connected: true })
+      } catch { /* ignore */ }
+    }
+    bingxWs.onerror = () => bingxWs.close()
+    bingxWs.onclose = () => setBingX(prev => ({ ...prev, connected: false }))
+    refs.current.push(bingxWs)
 
     return () => { refs.current.forEach(ws => ws.close()) }
   }, [symbol, supported, base])
 
-  const prices = [binance.price, bybit.price, gate.price, mexc.price]
+  const prices = [binance.price, bybit.price, gate.price, bingx.price]
     .filter((p): p is number => p !== null)
   const composite = prices.length > 0
     ? prices.reduce((a, b) => a + b, 0) / prices.length
     : null
 
-  return { binance, bybit, gate, mexc, composite, supported }
+  return { binance, bybit, gate, bingx, composite, supported }
 }
