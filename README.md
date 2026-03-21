@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+# Pyth Radar
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Oracle health intelligence dashboard for Pyth Network.**
 
-Currently, two official plugins are available:
+Real-time monitoring of oracle stress, confidence interval anomalies, and price divergence across 50+ assets — crypto, forex, commodities, and equities.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Built for the [Pyth Community Hackathon 2026](https://dev-forum.pyth.network/t/pyth-community-hackathon/548).
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Three screens
 
-## Expanding the ESLint configuration
+### 1. Fear Index
+A 0–100 oracle stress score computed from confidence interval widths across all tracked assets relative to their historical averages. One number that tells you if the oracle network is under stress.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 2. Confidence Heatmap
+A visual grid of 50+ Pyth assets colored by CI stress level. Green = calm, red = critical. One glance shows where stress is concentrated — click any asset to drill down.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 3. Pyth Delta
+Per-asset comparison of the Pyth oracle price vs a composite price from 4 major exchanges (Binance, Bybit, Gate.io, MEXC) in real time. Detects divergence events with configurable thresholds.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Stack
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- React + Vite + TypeScript
+- Tailwind CSS
+- TradingView Lightweight Charts
+- Pyth Hermes WebSocket (`wss://hermes.pyth.network/ws`)
+- Pyth Benchmarks API (historical baselines)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Run locally
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
