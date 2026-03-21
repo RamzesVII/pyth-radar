@@ -14,8 +14,7 @@ const TRADFI_MAP: Record<string, TradFiSymbols> = {
   'XAG/USD':   { gate: 'XAG_USDT',    binanceF: 'xagusdt',  bingx: 'NCCOXAG2USD-USDT' },
   'EUR/USD':   { gate: 'EURUSD_USDT' },
   'GBP/USD':   { gate: 'GBPUSD_USDT' },
-  'BRENT/USD': { bingx: 'NCCO724OILBRENT2USD-USDT' },
-  'WTI/USD':   { bingx: 'NCCO724OILWTI2USD-USDT' },
+  // BRENT/WTI: BingX commodity WS not supported (100400), no reliable real-time source
   'AAPL/USD':  { gate: 'AAPLX_USDT',  bingx: 'AAPLX-USDT' },
   'MSFT/USD':  { gate: 'MSFT_USDT' },
   'NVDA/USD':  { gate: 'NVDAX_USDT',  bingx: 'NVDAX-USDT' },

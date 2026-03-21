@@ -10,8 +10,8 @@ export const DEVIATION_SYMBOLS: string[] = [
   'INJ/USD', 'PYTH/USD',
   // Forex (2)
   'EUR/USD', 'GBP/USD',
-  // Commodities (4)
-  'XAU/USD', 'XAG/USD', 'BRENT/USD', 'WTI/USD',
+  // Commodities (2) — BRENT/WTI excluded: no reliable real-time WS source
+  'XAU/USD', 'XAG/USD',
   // Equities (7)
   'AAPL/USD', 'MSFT/USD', 'NVDA/USD', 'TSLA/USD',
   'AMZN/USD', 'GOOGL/USD', 'META/USD',
@@ -44,12 +44,6 @@ const GATE_FUT_MAP: Record<string, string> = {
   METAX_USDT: 'META/USD',
 }
 
-// ── BingX perpetuals (oil + remaining metals/equities) ───────────────────────
-// BingX symbol → Pyth symbol
-const BINGX_MAP: Record<string, string> = {
-  'NCCO724OILBRENT2USD-USDT': 'BRENT/USD',
-  'NCCO724OILWTI2USD-USDT':   'WTI/USD',
-}
 
 // Returns composite market price per symbol (null = not yet received)
 export function useDeviationHeatmap(): Record<string, number | null> {
@@ -97,42 +91,6 @@ export function useDeviationHeatmap(): Record<string, number | null> {
     }
     gateFutWs.onerror = () => gateFutWs.close()
     refs.current.push(gateFutWs)
-
-    // ── 3. BingX for oil (GZIP-compressed) ───────────────────────────────────
-    const bingxWs = new WebSocket('wss://open-api-ws.bingx.com/market')
-    bingxWs.onopen = () => {
-      Object.keys(BINGX_MAP).forEach(sym =>
-        bingxWs.send(JSON.stringify({
-          id:       Math.random().toString(36).slice(2),
-          reqType:  'sub',
-          dataType: `${sym}@lastPrice`,
-        }))
-      )
-    }
-    bingxWs.onmessage = async (e) => {
-      try {
-        let text: string
-        if (e.data instanceof Blob) {
-          const buf    = await e.data.arrayBuffer()
-          const ds     = new DecompressionStream('gzip')
-          const writer = ds.writable.getWriter()
-          writer.write(new Uint8Array(buf))
-          writer.close()
-          text = await new Response(ds.readable).text()
-        } else {
-          text = e.data as string
-        }
-        const d = JSON.parse(text)
-        if (d.ping) { bingxWs.send(JSON.stringify({ pong: d.ping })); return }
-        const bingxSym = (d.dataType as string | undefined)?.replace('@lastPrice', '')
-        const symbol   = bingxSym ? BINGX_MAP[bingxSym] : null
-        const raw      = d.data?.lastPrice ?? d.lastPrice
-        const price    = raw ? parseFloat(raw) : null
-        if (symbol && price && price > 0) set(symbol, price)
-      } catch { /* ignore */ }
-    }
-    bingxWs.onerror = () => bingxWs.close()
-    refs.current.push(bingxWs)
 
     return () => {
       refs.current.forEach(ws => ws.close())
