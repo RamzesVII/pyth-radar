@@ -53,7 +53,8 @@ function makeGateFutWs(
   ws.onmessage = (e) => {
     try {
       const d = JSON.parse(e.data)
-      const price = d.result?.last ? parseFloat(d.result.last) : null
+      const item  = Array.isArray(d.result) ? d.result[0] : d.result
+      const price = item?.last ? parseFloat(item.last) : null
       if (price != null && !isNaN(price) && price > 0) setState({ price, connected: true })
     } catch { /* ignore */ }
   }

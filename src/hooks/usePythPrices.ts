@@ -145,23 +145,23 @@ export function usePythPrices() {
       try {
         const data = JSON.parse(event.data)
         if (data.type !== 'price_update') return
-        const parsed = data.parsed
-        if (!Array.isArray(parsed)) return
+        const feed = data.price_feed
+        if (!feed) return
 
-        setPrices(prev => {
-          const next = { ...prev }
-          for (const item of parsed) {
-            const id = item.id
-            const symbol = Object.entries(PYTH_FEEDS).find(([, v]) => v === id)?.[0]
-            if (!symbol) continue
-            const p = item.price
-            const expo = p.expo
-            const price = p.price * Math.pow(10, expo)
-            const conf  = p.conf  * Math.pow(10, expo)
-            next[symbol] = { id, symbol, price, conf, expo, publishTime: p.publish_time }
-          }
-          return next
-        })
+        const id     = feed.id as string
+        const symbol = Object.entries(PYTH_FEEDS).find(([, v]) => v === id)?.[0]
+        if (!symbol) return
+
+        const p     = feed.price
+        const expo  = p.expo as number
+        const price = parseFloat(p.price) * Math.pow(10, expo)
+        const conf  = parseFloat(p.conf)  * Math.pow(10, expo)
+        if (!price || price <= 0) return
+
+        setPrices(prev => ({
+          ...prev,
+          [symbol]: { id, symbol, price, conf, expo, publishTime: p.publish_time as number },
+        }))
       } catch {
         // ignore
       }

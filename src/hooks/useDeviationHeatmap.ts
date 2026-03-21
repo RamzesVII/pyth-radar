@@ -88,9 +88,10 @@ export function useDeviationHeatmap(): Record<string, number | null> {
     gateFutWs.onmessage = (e) => {
       try {
         const d        = JSON.parse(e.data)
-        const contract = d.result?.contract as string | undefined
+        const item     = Array.isArray(d.result) ? d.result[0] : d.result
+        const contract = item?.contract as string | undefined
         const symbol   = contract ? GATE_FUT_MAP[contract] : null
-        const price    = d.result?.last ? parseFloat(d.result.last) : null
+        const price    = item?.last ? parseFloat(item.last) : null
         if (symbol && price && price > 0) set(symbol, price)
       } catch { /* ignore */ }
     }
