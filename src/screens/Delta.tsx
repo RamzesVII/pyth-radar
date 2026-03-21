@@ -449,6 +449,51 @@ function ExchangeChart({ label, price, pythPrice, ciPct, connected }: SparklineP
   )
 }
 
+// ─── Divergence events log ────────────────────────────────────────────────────
+
+interface DivergenceEvent {
+  id:       number
+  time:     number   // epoch ms
+  exchange: string
+  delta:    number
+  type:     'out' | 'in'  // crossed outside CI or returned inside
+}
+
+function DivergenceLog({ events }: { events: DivergenceEvent[] }) {
+  return (
+    <div className="glass p-4 mb-4">
+      <p className="text-slate-400 text-xs uppercase tracking-widest font-medium mb-3">Divergence Log</p>
+      {events.length === 0 ? (
+        <p className="text-slate-700 text-sm text-center py-4">No CI crossings yet · monitoring…</p>
+      ) : (
+        <div className="space-y-0.5 max-h-48 overflow-y-auto">
+          {events.map(ev => {
+            const timeStr = new Date(ev.time).toTimeString().slice(0, 8)
+            const isOut   = ev.type === 'out'
+            return (
+              <div key={ev.id} className="flex items-center gap-3 py-1 text-xs font-mono">
+                <span className="text-slate-600 w-16 flex-shrink-0">{timeStr}</span>
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isOut ? 'bg-orange-400' : 'bg-emerald-400'}`} />
+                <span className="text-slate-400 flex-1">{ev.exchange}</span>
+                <span className={`tabular-nums font-medium ${isOut ? 'text-orange-400' : 'text-emerald-400'}`}>
+                  {ev.delta > 0 ? '+' : ''}{ev.delta.toFixed(4)}%
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                  isOut
+                    ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                }`}>
+                  {isOut ? '→ OUT' : '→ IN'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Delta screen ─────────────────────────────────────────────────────────────
 
 export default function Delta({ asset, prices, pythConnected }: Props) {
@@ -471,6 +516,50 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
   const showTradFi = !isCrypto && tradfi.supported
 
   const [compareMode, setCompareMode] = useState(false)
+  const [events,      setEvents]      = useState<DivergenceEvent[]>([])
+  const prevOutside = useRef<Record<string, boolean>>({})
+  const eventId     = useRef(0)
+
+  const pythPrice = p?.price ?? null
+
+  useEffect(() => {
+    if (pythPrice == null || ciPct == null) return
+
+    const toCheck: Array<{ key: string; price: number | null }> = isCrypto
+      ? [
+          { key: 'Composite',     price: composite },
+          { key: 'Binance',       price: cex.binance.price },
+          { key: 'Bybit',         price: cex.bybit.price },
+          { key: 'Gate.io',       price: cex.gate.price },
+          { key: 'BingX',         price: cex.bingx.price },
+        ]
+      : [
+          { key: 'Composite',       price: composite },
+          { key: 'Gate.io',         price: tradfi.gate.price },
+          { key: 'Binance Futures', price: tradfi.binanceF.price },
+          { key: 'BingX',           price: tradfi.bingx.price },
+        ]
+
+    const newEvents: DivergenceEvent[] = []
+    for (const { key, price: px } of toCheck) {
+      if (px == null) continue
+      const d     = ((px - pythPrice) / pythPrice) * 100
+      const isOut = Math.abs(d) > ciPct
+      const prev  = prevOutside.current[key]
+      if (prev !== undefined && prev !== isOut) {
+        newEvents.push({ id: ++eventId.current, time: Date.now(), exchange: key, delta: d, type: isOut ? 'out' : 'in' })
+      }
+      prevOutside.current[key] = isOut
+    }
+    if (newEvents.length > 0) {
+      setEvents(prev => [...newEvents, ...prev].slice(0, 50))
+    }
+  }, [ // eslint-disable-line react-hooks/exhaustive-deps
+    pythPrice, ciPct,
+    composite,
+    cex.binance.price, cex.bybit.price, cex.gate.price, cex.bingx.price,
+    tradfi.gate.price, tradfi.binanceF.price, tradfi.bingx.price,
+  ])
 
   return (
     <div className="min-h-[calc(100vh-56px)] px-6 py-10">
@@ -646,6 +735,9 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
             <p className="text-slate-600 text-sm">No independent market data available for this asset.</p>
           </div>
         ) : null}
+
+        {/* Divergence log */}
+        {(showCrypto || showTradFi) && p && <DivergenceLog events={events} />}
 
       </div>
     </div>
