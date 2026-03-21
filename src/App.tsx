@@ -71,7 +71,7 @@ function App() {
       <div className="pt-14">
         {screen === 'fear'    && <DeviationIndex prices={prices} connected={connected} marketPrices={marketPrices} onOpenHeatmap={() => setScreen('heatmap')} />}
         {screen === 'heatmap' && <Heatmap   prices={prices} connected={connected} marketPrices={marketPrices} onSelectAsset={openDelta} />}
-        {screen === 'delta'   && <Delta     asset={selectedAsset} prices={prices} pythConnected={connected} />}
+        {screen === 'delta'   && <Delta key={selectedAsset} asset={selectedAsset} prices={prices} pythConnected={connected} />}
       </div>
     </div>
   )

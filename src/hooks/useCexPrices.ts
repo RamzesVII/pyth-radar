@@ -64,10 +64,6 @@ export function useCexPrices(symbol: string): CexPrices {
   useEffect(() => {
     refs.current.forEach(ws => ws.close())
     refs.current = []
-    setBinance({ price: null, connected: false })
-    setBybit  ({ price: null, connected: false })
-    setGate   ({ price: null, connected: false })
-    setBingX  ({ price: null, connected: false })
 
     if (!supported || !base) return
 

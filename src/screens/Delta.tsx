@@ -471,7 +471,6 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
   const showTradFi = !isCrypto && tradfi.supported
 
   const [compareMode, setCompareMode] = useState(false)
-  useEffect(() => { setCompareMode(false) }, [asset])
 
   return (
     <div className="min-h-[calc(100vh-56px)] px-6 py-10">

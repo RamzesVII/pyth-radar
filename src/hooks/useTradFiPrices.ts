@@ -137,9 +137,6 @@ export function useTradFiPrices(symbol: string): TradFiPrices {
   useEffect(() => {
     refs.current.forEach(ws => ws.close())
     refs.current = []
-    setGate    ({ price: null, connected: false })
-    setBinanceF({ price: null, connected: false })
-    setBingX   ({ price: null, connected: false })
 
     if (!syms) return
 
