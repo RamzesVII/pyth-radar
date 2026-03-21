@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import React from 'react'
+import type React from 'react'
 
 export interface ExchangePrice {
   price: number | null

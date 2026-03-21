@@ -16,7 +16,7 @@ export const PYTH_FEEDS: Record<string, string> = {
   'ETH/USD':   'ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
   'SOL/USD':   'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
   'BNB/USD':   '2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f',
-  'XRP/USD':   '50c67b3fd225db8912a424dd4baed60ffdde625ed2feeff57d0deadea4161d33',
+  'XRP/USD':   'ec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8',
   'ADA/USD':   '2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d',
   'AVAX/USD':  '93da3352f9f1d105fdfe4971cfa80e9dd777bfc5d0f683ebb6e1294b92137bb7',
   'DOGE/USD':  'dcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c',
@@ -43,7 +43,6 @@ export const PYTH_FEEDS: Record<string, string> = {
   // Forex
   'EUR/USD':   'a995d00bb36a63cef7fd2c287dc105fc8f3d93779f062f09551b0af3e81ec30b',
   'GBP/USD':   '84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1',
-  'JPY/USD':   'ef2c98c804ba503c6a707e38be4dfbb16683bab87823dcecaef0c9d8dd84a1b',
   'CHF/USD':   '0b1e3297e69f162877b577b0d6a47a0d63b2392bc8499e6540da4187a63e28f8',
   'CAD/USD':   '3112b03a41c910ed446852aacf67118cb1bec67b2cd0b9a214c58cc0eaa2ecca',
   'AUD/USD':   '67a6f93030420c1c9e3fe37c1ab6b77966af82f995944a9fefce357a22854a80',
@@ -89,7 +88,7 @@ export const HISTORICAL_CI: Record<string, number> = {
   'SUI/USD': 0.30, 'SEI/USD': 0.35, 'TIA/USD': 0.35,
   'INJ/USD': 0.30, 'JTO/USD': 0.40, 'WIF/USD': 0.50,
   'BONK/USD': 0.60, 'JUP/USD': 0.35, 'PYTH/USD': 0.30,
-  'EUR/USD': 0.004, 'GBP/USD': 0.005, 'JPY/USD': 0.003,
+  'EUR/USD': 0.004, 'GBP/USD': 0.005,
   'CHF/USD': 0.004, 'CAD/USD': 0.004, 'AUD/USD': 0.005,
   'XAU/USD': 0.06, 'XAG/USD': 0.10, 'BRENT/USD': 0.08, 'WTI/USD': 0.08,
   'NATGAS/USD': 0.20, 'COPPER/USD': 0.12, 'PLAT/USD': 0.10, 'PALL/USD': 0.15,
@@ -110,7 +109,7 @@ export const FEED_CATEGORY: Record<string, string> = {
   'SUI/USD': 'Crypto', 'SEI/USD': 'Crypto', 'TIA/USD': 'Crypto',
   'INJ/USD': 'Crypto', 'JTO/USD': 'Crypto', 'WIF/USD': 'Crypto',
   'BONK/USD': 'Crypto', 'JUP/USD': 'Crypto', 'PYTH/USD': 'Crypto',
-  'EUR/USD': 'Forex', 'GBP/USD': 'Forex', 'JPY/USD': 'Forex',
+  'EUR/USD': 'Forex', 'GBP/USD': 'Forex',
   'CHF/USD': 'Forex', 'CAD/USD': 'Forex', 'AUD/USD': 'Forex',
   'XAU/USD': 'Commodities', 'XAG/USD': 'Commodities',
   'BRENT/USD': 'Commodities', 'WTI/USD': 'Commodities', 'NATGAS/USD': 'Commodities',
@@ -131,7 +130,6 @@ export function usePythPrices() {
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    // Filter out any malformed IDs (must be 64 hex chars)
     const feedIds = Object.values(PYTH_FEEDS).filter(id => /^[0-9a-f]{64}$/.test(id))
     const ws = new WebSocket(HERMES_WS)
     wsRef.current = ws
@@ -140,6 +138,8 @@ export function usePythPrices() {
       setConnected(true)
       ws.send(JSON.stringify({ ids: feedIds, type: 'subscribe', parsed: true }))
     }
+    ws.onerror = () => ws.close()
+    ws.onclose = () => setConnected(false)
 
     ws.onmessage = (event) => {
       try {
@@ -162,13 +162,8 @@ export function usePythPrices() {
           ...prev,
           [symbol]: { id, symbol, price, conf, expo, publishTime: p.publish_time as number },
         }))
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     }
-
-    ws.onclose = () => setConnected(false)
-    ws.onerror = () => ws.close()
 
     return () => ws.close()
   }, [])
