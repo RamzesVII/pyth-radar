@@ -23,7 +23,7 @@ const CEX_SUPPORTED: Record<string, string> = {
   'LTC/USD': 'LTC', 'NEAR/USD': 'NEAR', 'APT/USD': 'APT', 'ARB/USD': 'ARB',
   'OP/USD': 'OP', 'SUI/USD': 'SUI', 'SEI/USD': 'SEI', 'TIA/USD': 'TIA',
   'INJ/USD': 'INJ', 'JTO/USD': 'JTO', 'WIF/USD': 'WIF', 'BONK/USD': 'BONK',
-  'JUP/USD': 'JUP', 'PYTH/USD': 'PYTH',
+  'JUP/USD': 'JUP', 'PYTH/USD': 'PYTH', 'HYPE/USD': 'HYPE',
 }
 
 function makeWs(

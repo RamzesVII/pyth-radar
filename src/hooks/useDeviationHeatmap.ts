@@ -7,7 +7,7 @@ export const DEVIATION_SYMBOLS: string[] = [
   'BTC/USD', 'ETH/USD', 'SOL/USD', 'BNB/USD', 'XRP/USD',
   'ADA/USD', 'AVAX/USD', 'DOGE/USD', 'LINK/USD', 'LTC/USD',
   'NEAR/USD', 'APT/USD', 'ARB/USD', 'OP/USD', 'SUI/USD',
-  'INJ/USD', 'PYTH/USD',
+  'INJ/USD', 'PYTH/USD', 'HYPE/USD',
   // Forex (2)
   'EUR/USD', 'GBP/USD',
   // Commodities (3)
@@ -54,13 +54,15 @@ export function useDeviationHeatmap(): Record<string, number | null> {
       setPrices(prev => ({ ...prev, [symbol]: price }))
 
     let cancelled = false
-    let binWs:    WebSocket | null = null
-    let gateWs:   WebSocket | null = null
-    let okxWs:    WebSocket | null = null
-    let binD = 1000, gD = 1000, oD = 1000
+    let binWs:      WebSocket | null = null
+    let gateWs:     WebSocket | null = null
+    let okxWs:      WebSocket | null = null
+    let gateSpotWs: WebSocket | null = null
+    let binD = 1000, gD = 1000, oD = 1000, gsD = 1000
     let binT: ReturnType<typeof setTimeout> | null = null
     let gT:   ReturnType<typeof setTimeout> | null = null
     let oT:   ReturnType<typeof setTimeout> | null = null
+    let gsT:  ReturnType<typeof setTimeout> | null = null
 
     // ── 1. Binance combined stream ────────────────────────────────────────────
     const connectBinance = () => {
@@ -122,12 +124,31 @@ export function useDeviationHeatmap(): Record<string, number | null> {
       ws.onclose = () => { if (!cancelled) { oT = setTimeout(connectOkx, oD); oD = Math.min(oD * 2, 30_000) } }
     }
 
-    connectBinance(); connectGate(); connectOkx()
+    // ── 4. Gate.io spot (HYPE/USD) ───────────────────────────────────────────
+    const connectGateSpot = () => {
+      const ws = new WebSocket('wss://api.gateio.ws/ws/v4/')
+      gateSpotWs = ws
+      ws.onopen = () => {
+        gsD = 1000
+        ws.send(JSON.stringify({ time: Math.floor(Date.now() / 1000), channel: 'spot.tickers', event: 'subscribe', payload: ['HYPE_USDT'] }))
+      }
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          const price = d.result?.last ? parseFloat(d.result.last) : null
+          if (price && price > 0) set('HYPE/USD', price)
+        } catch { /* ignore */ }
+      }
+      ws.onerror = () => ws.close()
+      ws.onclose = () => { if (!cancelled) { gsT = setTimeout(connectGateSpot, gsD); gsD = Math.min(gsD * 2, 30_000) } }
+    }
+
+    connectBinance(); connectGate(); connectOkx(); connectGateSpot()
 
     return () => {
       cancelled = true
-      ;[binT, gT, oT].forEach(t => t && clearTimeout(t))
-      binWs?.close(); gateWs?.close(); okxWs?.close()
+      ;[binT, gT, oT, gsT].forEach(t => t && clearTimeout(t))
+      binWs?.close(); gateWs?.close(); okxWs?.close(); gateSpotWs?.close()
     }
   }, [])
 

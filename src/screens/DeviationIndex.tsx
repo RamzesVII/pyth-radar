@@ -152,9 +152,11 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
 
       {/* Global score card */}
       <div className={`glass-strong ${globalLevel.glow} relative flex flex-col items-center px-16 py-10 mb-8 min-w-[340px]`}>
-        <p className="text-slate-400 text-xs uppercase tracking-widest mb-5 font-medium">
+        <p className="text-slate-400 text-xs uppercase tracking-widest mb-2 font-medium">
           Deviation Index
         </p>
+        <p className="text-slate-200 text-sm font-medium mb-1">Pyth price is the benchmark</p>
+        <p className="text-slate-600 text-xs mb-4">29 assets · 4 exchanges · live</p>
 
         <div className={`relative flex items-center justify-center w-44 h-44 rounded-full border-2 ${globalLevel.ring} ${globalLevel.bg} pulse-ring mb-5`}>
           <div className="absolute inset-2 rounded-full border border-white/5" />
@@ -168,7 +170,7 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
 
         <div className={`px-4 py-1.5 rounded-full border ${globalLevel.ring} ${globalLevel.bg} mb-4`}>
           <span className={`text-sm font-semibold ${globalLevel.color}`}>
-            {dataLoaded ? globalLevel.label : 'Loading…'}
+            {dataLoaded ? globalLevel.label : 'Aggregating markets…'}
           </span>
         </div>
 
@@ -208,9 +210,18 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
         onClick={onOpenHeatmap}
         className="mt-8 flex items-center gap-2 text-sm text-slate-400 hover:text-purple-300 transition-colors group"
       >
-        View Deviation Heatmap
+        Scan 29 Assets
         <span className="group-hover:translate-x-0.5 transition-transform">→</span>
       </button>
+
+      {/* Footer */}
+      <p className="absolute bottom-4 text-slate-700 text-xs">
+        Powered by{' '}
+        <a href="https://pyth.network" target="_blank" rel="noopener noreferrer"
+           className="hover:text-slate-500 transition-colors">
+          Pyth Network
+        </a>
+      </p>
     </div>
   )
 }

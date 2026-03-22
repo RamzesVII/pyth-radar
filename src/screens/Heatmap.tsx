@@ -10,13 +10,23 @@ interface Props {
   onSelectAsset: (asset: string) => void
 }
 
-// Color by |delta| relative to live CI width
+// Cell color = deviation magnitude (how far CEX is from Pyth)
 // ratio = |delta %| / CI %
 function getCell(ratio: number) {
-  if (ratio < 0.5) return { bg: 'bg-emerald-500/15', border: 'border-emerald-500/25', text: 'text-emerald-400', label: 'In band' }
-  if (ratio < 1.0) return { bg: 'bg-slate-500/10',   border: 'border-slate-500/20',   text: 'text-slate-300',  label: 'Near edge' }
-  if (ratio < 2.5) return { bg: 'bg-orange-500/15',  border: 'border-orange-500/30',  text: 'text-orange-400', label: 'Outside CI' }
-  return             { bg: 'bg-red-500/20',      border: 'border-red-500/35',     text: 'text-red-400',    label: 'Far outside' }
+  if (ratio < 0.5) return { bg: 'bg-emerald-500/15', text: 'text-emerald-400', label: 'In band' }
+  if (ratio < 1.0) return { bg: 'bg-slate-500/10',   text: 'text-slate-300',  label: 'Near edge' }
+  if (ratio < 2.5) return { bg: 'bg-orange-500/15',  text: 'text-orange-400', label: 'Outside CI' }
+  return             { bg: 'bg-red-500/20',      text: 'text-red-400',    label: 'Far outside' }
+}
+
+// Border color = CI stress (how confident the oracle is right now vs historical)
+// ciStress = live CI width / historical avg CI width
+function getCIBorder(ciStress: number | null): string {
+  if (ciStress === null) return 'border-slate-700/20'
+  if (ciStress < 1.2)   return 'border-slate-500/25'    // calm — oracle confident
+  if (ciStress < 2.0)   return 'border-yellow-500/50'   // elevated
+  if (ciStress < 3.5)   return 'border-orange-500/60'   // stressed
+  return                        'border-red-500/70'       // extreme
 }
 
 export default function Heatmap({ prices, connected, marketPrices, onSelectAsset }: Props) {
@@ -34,7 +44,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
           <div>
             <h1 className="text-xl font-semibold text-slate-100">Deviation Heatmap</h1>
             <p className="text-slate-500 text-sm mt-1">
-              Market vs Pyth benchmark · colored by CI signal · click to inspect
+              How far each market trades from the Pyth benchmark · click to inspect
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -62,7 +72,8 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 mb-6 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-6 text-xs text-slate-500">
+          <span className="text-slate-600 uppercase tracking-wide text-[10px]">Fill = deviation</span>
           {[
             { color: 'bg-emerald-500', label: 'In CI band' },
             { color: 'bg-slate-500',   label: 'Near edge' },
@@ -70,7 +81,19 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
             { color: 'bg-red-500',     label: 'Far outside' },
           ].map(l => (
             <div key={l.label} className="flex items-center gap-1.5">
-              <span className={`w-2.5 h-2.5 rounded-sm ${l.color} opacity-70`} />
+              <span className={`w-3 h-3 rounded-sm ${l.color} opacity-70`} />
+              {l.label}
+            </div>
+          ))}
+          <span className="text-slate-600 uppercase tracking-wide text-[10px] ml-2">Border = CI stress</span>
+          {[
+            { border: 'border-slate-500/50',  label: 'Calm' },
+            { border: 'border-yellow-500/70', label: 'Elevated' },
+            { border: 'border-orange-500/80', label: 'Stressed' },
+            { border: 'border-red-500/90',    label: 'Extreme' },
+          ].map(l => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-sm border-2 ${l.border}`} />
               {l.label}
             </div>
           ))}
@@ -87,12 +110,13 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
               ? Math.abs(delta) / ciPct
               : null
 
+            const hist     = HISTORICAL_CI[symbol] ?? 0.15
+            const ciStress = ciPct !== null ? ciPct / hist : null
             const cell  = ratio !== null
               ? getCell(ratio)
-              : { bg: 'bg-slate-800/40', border: 'border-slate-700/20', text: 'text-slate-600', label: '–' }
+              : { bg: 'bg-slate-800/40', text: 'text-slate-600', label: '–' }
+            const borderCls = getCIBorder(ciStress)
             const isHov = hovered === symbol
-            const hist  = HISTORICAL_CI[symbol] ?? 0.15
-            const ciStress = ciPct !== null ? ciPct / hist : null
 
             return (
               <button
@@ -100,7 +124,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
                 onClick={() => onSelectAsset(symbol)}
                 onMouseEnter={() => setHovered(symbol)}
                 onMouseLeave={() => setHovered(null)}
-                className={`relative glass fade-in flex flex-col items-center py-3 px-2 border transition-all duration-200 hover:scale-105 hover:z-10 ${cell.bg} ${cell.border}`}
+                className={`relative glass fade-in flex flex-col items-center py-3 px-2 border-2 transition-all duration-200 hover:scale-105 hover:z-10 ${cell.bg} ${borderCls}`}
               >
                 <span className="text-xs font-semibold text-slate-200 leading-tight">
                   {symbol.replace('/USD', '')}

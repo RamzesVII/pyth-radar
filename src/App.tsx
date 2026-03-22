@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AboutModal from './components/AboutModal'
 import { usePythPrices } from './hooks/usePythPrices'
 import { useDeviationHeatmap } from './hooks/useDeviationHeatmap'
 import DeviationIndex from './screens/DeviationIndex'
@@ -7,17 +8,18 @@ import Delta from './screens/Delta'
 import pythLogo from './assets/pyth-logo-dark.svg'
 import pythSymbol from './assets/pyth-logo-symbol-dark.svg'
 
-export type Screen = 'fear' | 'heatmap' | 'delta'
+export type Screen = 'overview' | 'heatmap' | 'delta'
 
-const NAV_ITEMS: { id: Screen; label: string; icon: string }[] = [
-  { id: 'fear',    label: 'Overview',  icon: '◎' },
-  { id: 'heatmap', label: 'Heatmap',   icon: '▦' },
-  { id: 'delta',   label: 'Delta',     icon: '∆' },
+const NAV_ITEMS: { id: Screen; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'heatmap',  label: 'Heatmap'  },
+  { id: 'delta',    label: 'Delta'    },
 ]
 
 function App() {
-  const [screen, setScreen]           = useState<Screen>('fear')
+  const [screen, setScreen]               = useState<Screen>('overview')
   const [selectedAsset, setSelectedAsset] = useState<string>('BTC/USD')
+  const [showAbout, setShowAbout]         = useState(false)
 
   // Single instances — shared across all screens
   const { prices, connected } = usePythPrices()
@@ -53,23 +55,32 @@ function App() {
                   : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
             >
-              <span className="text-xs opacity-70">{item.icon}</span>
               {item.label}
             </button>
           ))}
         </div>
 
-        {/* Status dot */}
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
-            style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}} />
-          {connected ? 'Live' : 'Connecting…'}
+        {/* Status dot + About */}
+        <div className="flex items-center gap-3 text-xs text-slate-500">
+          <button
+            onClick={() => setShowAbout(true)}
+            className="w-5 h-5 rounded-full border border-slate-600 text-slate-500 hover:text-slate-300 hover:border-slate-400 transition-colors flex items-center justify-center text-[10px] font-semibold"
+          >
+            ?
+          </button>
+          <div className="flex items-center gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
+              style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}} />
+            {connected ? 'Live' : 'Connecting…'}
+          </div>
         </div>
       </nav>
 
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+
       {/* Content */}
       <div className="pt-14">
-        {screen === 'fear'    && <DeviationIndex prices={prices} connected={connected} marketPrices={marketPrices} onOpenHeatmap={() => setScreen('heatmap')} />}
+        {screen === 'overview' && <DeviationIndex prices={prices} connected={connected} marketPrices={marketPrices} onOpenHeatmap={() => setScreen('heatmap')} />}
         {screen === 'heatmap' && <Heatmap   prices={prices} connected={connected} marketPrices={marketPrices} onSelectAsset={openDelta} />}
         {screen === 'delta'   && <Delta key={selectedAsset} asset={selectedAsset} prices={prices} pythConnected={connected} />}
       </div>
