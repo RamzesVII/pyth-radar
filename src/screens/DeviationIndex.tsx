@@ -156,7 +156,7 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
           Deviation Index
         </p>
         <p className="text-slate-200 text-sm font-medium mb-1">Pyth price is the benchmark</p>
-        <p className="text-slate-600 text-xs mb-4">29 assets · 4 exchanges · live</p>
+        <p className="text-slate-600 text-xs mb-4">{DEVIATION_SYMBOLS.length} assets · 4 exchanges · live</p>
 
         <div className={`relative flex items-center justify-center w-44 h-44 rounded-full border-2 ${globalLevel.ring} ${globalLevel.bg} pulse-ring mb-5`}>
           <div className="absolute inset-2 rounded-full border border-white/5" />
@@ -180,7 +180,7 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
             style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}}
           />
           {connected
-            ? `${Object.keys(prices).length} assets · Pyth Hermes live`
+            ? `${DEVIATION_SYMBOLS.filter(s => prices[s]).length}/${DEVIATION_SYMBOLS.length} assets · Pyth live`
             : 'Connecting to Pyth…'}
         </div>
       </div>
@@ -210,7 +210,7 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
         onClick={onOpenHeatmap}
         className="mt-8 flex items-center gap-2 text-sm text-slate-400 hover:text-purple-300 transition-colors group"
       >
-        Scan 29 Assets
+        Scan {DEVIATION_SYMBOLS.length} Assets
         <span className="group-hover:translate-x-0.5 transition-transform">→</span>
       </button>
 
