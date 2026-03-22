@@ -38,7 +38,7 @@ function App() {
         <div className="flex items-center gap-3">
           <img src={pythSymbol} alt="Pyth" className="h-7 w-7" />
           <div className="flex items-center gap-1.5">
-            <img src={pythLogo} alt="Pyth" className="h-4 opacity-90" />
+            <img src={pythLogo} alt="Pyth" className="h-4" style={{ filter: 'invert(1) opacity(0.9)' }} />
             <span className="text-slate-400 text-sm font-light tracking-widest uppercase">Radar</span>
           </div>
         </div>

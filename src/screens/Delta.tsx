@@ -18,6 +18,11 @@ function fmt(n: number, d = 2) {
   return n.toLocaleString('en', { minimumFractionDigits: d, maximumFractionDigits: d })
 }
 
+function fmtPrice(n: number) {
+  const d = n >= 1000 ? 2 : n >= 1 ? 4 : n >= 0.01 ? 6 : 8
+  return n.toLocaleString('en', { minimumFractionDigits: d, maximumFractionDigits: d })
+}
+
 // ─── Main composite chart ────────────────────────────────────────────────────
 
 interface MainChartProps {
@@ -259,7 +264,7 @@ function SparklineRow({ label, price, pythPrice, ciPct, connected }: SparklinePr
 
   const deltaColor = delta == null ? 'text-slate-600'
     : isOutside
-      ? delta > 0 ? 'text-red-400' : 'text-emerald-400'
+      ? delta > 0 ? 'text-emerald-400' : 'text-red-400'
       : 'text-slate-300'
 
   return (
@@ -416,7 +421,7 @@ function ExchangeChart({ label, price, pythPrice, ciPct, connected }: SparklineP
 
   const deltaColor = delta == null ? 'text-slate-600'
     : isOutside
-      ? delta > 0 ? 'text-red-400' : 'text-emerald-400'
+      ? delta > 0 ? 'text-emerald-400' : 'text-red-400'
       : 'text-slate-300'
 
   return (
@@ -432,7 +437,7 @@ function ExchangeChart({ label, price, pythPrice, ciPct, connected }: SparklineP
         <div className="flex items-center gap-4">
           {price != null && (
             <span className="text-slate-500 text-xs font-mono">
-              ${price.toLocaleString('en', { maximumFractionDigits: 4 })}
+              ${fmtPrice(price)}
             </span>
           )}
           {delta != null ? (
@@ -590,7 +595,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Pyth Benchmark Price</p>
-                <p className="text-4xl font-bold text-slate-100">${fmt(p.price)}</p>
+                <p className="text-4xl font-bold text-slate-100">${fmtPrice(p.price)}</p>
                 <p className="text-slate-500 text-xs mt-2">Institutional aggregate · Citadel, Jane Street, Jump</p>
               </div>
               <div className="text-right">

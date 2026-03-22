@@ -107,7 +107,7 @@ function CategoryCard({ category, icon, score, movers, hasData, onClick }: CardP
             </span>
             <span className={`text-xs font-mono tabular-nums flex-shrink-0 ${
               Math.abs(delta) < 0.005 ? 'text-slate-500'
-              : delta > 0 ? 'text-red-400' : 'text-emerald-400'
+              : delta > 0 ? 'text-emerald-400' : 'text-red-400'
             }`}>
               {delta > 0 ? '+' : ''}{delta.toFixed(3)}%
             </span>

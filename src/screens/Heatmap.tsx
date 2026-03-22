@@ -21,12 +21,13 @@ function getCell(ratio: number) {
 
 // Border color = CI stress (how confident the oracle is right now vs historical)
 // ciStress = live CI width / historical avg CI width
-function getCIBorder(ciStress: number | null): string {
-  if (ciStress === null) return 'border-slate-700/20'
-  if (ciStress < 1.2)   return 'border-slate-500/25'    // calm — oracle confident
-  if (ciStress < 2.0)   return 'border-yellow-500/50'   // elevated
-  if (ciStress < 3.5)   return 'border-orange-500/60'   // stressed
-  return                        'border-red-500/70'       // extreme
+// Returns CSS color string for inline style (Tailwind border-color is overridden by .glass)
+function getCIBorderColor(ciStress: number | null): string {
+  if (ciStress === null) return 'rgba(255,255,255,0.08)'
+  if (ciStress < 1.2)   return 'rgba(255,255,255,0.08)'  // calm — invisible (intentional)
+  if (ciStress < 2.0)   return 'rgba(250,204,21,0.8)'    // yellow-400/80 — elevated
+  if (ciStress < 3.5)   return 'rgb(251,146,60)'          // orange-400 — stressed
+  return                        'rgb(248,113,113)'          // red-400 — extreme
 }
 
 export default function Heatmap({ prices, connected, marketPrices, onSelectAsset }: Props) {
@@ -72,31 +73,35 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-6 text-xs text-slate-500">
-          <span className="text-slate-600 uppercase tracking-wide text-[10px]">Fill = deviation</span>
-          {[
-            { color: 'bg-emerald-500', label: 'In CI band' },
-            { color: 'bg-slate-500',   label: 'Near edge' },
-            { color: 'bg-orange-500',  label: 'Outside CI' },
-            { color: 'bg-red-500',     label: 'Far outside' },
-          ].map(l => (
-            <div key={l.label} className="flex items-center gap-1.5">
-              <span className={`w-3 h-3 rounded-sm ${l.color} opacity-70`} />
-              {l.label}
-            </div>
-          ))}
-          <span className="text-slate-600 uppercase tracking-wide text-[10px] ml-2">Border = CI stress</span>
-          {[
-            { border: 'border-slate-500/50',  label: 'Calm' },
-            { border: 'border-yellow-500/70', label: 'Elevated' },
-            { border: 'border-orange-500/80', label: 'Stressed' },
-            { border: 'border-red-500/90',    label: 'Extreme' },
-          ].map(l => (
-            <div key={l.label} className="flex items-center gap-1.5">
-              <span className={`w-3 h-3 rounded-sm border-2 ${l.border}`} />
-              {l.label}
-            </div>
-          ))}
+        <div className="flex flex-col gap-2 mb-6 text-xs text-slate-500">
+          <div className="flex items-center gap-x-5">
+            <span className="text-slate-600 uppercase tracking-wide text-[10px] w-28 flex-shrink-0">Fill = deviation</span>
+            {[
+              { color: 'bg-emerald-500', label: 'In CI band' },
+              { color: 'bg-slate-500',   label: 'Near edge' },
+              { color: 'bg-orange-500',  label: 'Outside CI' },
+              { color: 'bg-red-500',     label: 'Far outside' },
+            ].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <span className={`w-3 h-3 rounded-sm ${l.color} opacity-70`} />
+                {l.label}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-x-5">
+            <span className="text-slate-600 uppercase tracking-wide text-[10px] w-28 flex-shrink-0">Border = CI stress</span>
+            {[
+              { border: 'border-slate-500/50',  label: 'Calm' },
+              { border: 'border-yellow-500/70', label: 'Elevated' },
+              { border: 'border-orange-500/80', label: 'Stressed' },
+              { border: 'border-red-500/90',    label: 'Extreme' },
+            ].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5">
+                <span className={`w-3 h-3 rounded-sm border-2 ${l.border}`} />
+                {l.label}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Grid */}
@@ -115,7 +120,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
             const cell  = ratio !== null
               ? getCell(ratio)
               : { bg: 'bg-slate-800/40', text: 'text-slate-600', label: '–' }
-            const borderCls = getCIBorder(ciStress)
+            const borderColor = getCIBorderColor(ciStress)
             const isHov = hovered === symbol
 
             return (
@@ -124,7 +129,8 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
                 onClick={() => onSelectAsset(symbol)}
                 onMouseEnter={() => setHovered(symbol)}
                 onMouseLeave={() => setHovered(null)}
-                className={`relative glass fade-in flex flex-col items-center py-3 px-2 border-2 transition-all duration-200 hover:scale-105 hover:z-10 ${cell.bg} ${borderCls}`}
+                style={{ borderColor, borderWidth: 2 }}
+                className={`relative glass fade-in flex flex-col items-center py-3 px-2 transition-all duration-200 hover:scale-105 hover:z-10 ${cell.bg}`}
               >
                 <span className="text-xs font-semibold text-slate-200 leading-tight">
                   {symbol.replace('/USD', '')}
@@ -144,7 +150,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
 
                 {/* Tooltip */}
                 {isHov && p && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 glass-strong text-left p-3 min-w-[190px] shadow-xl pointer-events-none">
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 text-left p-3 min-w-[190px] shadow-xl pointer-events-none rounded-xl bg-slate-900/95 border border-slate-700/60 backdrop-blur-sm">
                     <div className="text-xs font-semibold text-slate-200 mb-1.5">{symbol}</div>
                     <div className="text-[11px] text-slate-400 space-y-0.5">
                       <div>Pyth: <span className="text-slate-200">${p.price.toLocaleString('en', { maximumFractionDigits: 4 })}</span></div>
