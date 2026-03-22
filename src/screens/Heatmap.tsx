@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { HISTORICAL_CI } from '../hooks/usePythPrices'
 import type { PythPrice } from '../hooks/usePythPrices'
-import { DEVIATION_TABS, filterByTab } from '../hooks/useDeviationHeatmap'
+import { DEVIATION_TABS, DEVIATION_SYMBOLS, filterByTab } from '../hooks/useDeviationHeatmap'
 
 interface Props {
   prices:        Record<string, PythPrice>
@@ -51,7 +51,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
               style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}} />
-            {connected ? `${Object.keys(prices).length} live` : 'Connecting…'}
+            {connected ? `${DEVIATION_SYMBOLS.filter(s => prices[s]).length}/${DEVIATION_SYMBOLS.length} live` : 'Connecting…'}
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2">
+        <div className="grid grid-cols-6 gap-2">
           {filtered.map(symbol => {
             const p         = prices[symbol]
             const composite = marketPrices[symbol] ?? null

@@ -10,7 +10,7 @@ export interface CexPrices {
   binance: ExchangePrice
   bybit:   ExchangePrice
   gate:    ExchangePrice
-  bingx:   ExchangePrice
+  okx:     ExchangePrice
   composite: number | null
   supported: boolean // false for Forex/Commodities/Equities
 }
@@ -54,26 +54,26 @@ export function useCexPrices(symbol: string): CexPrices {
   const [binance, setBinance] = useState<ExchangePrice>({ price: null, connected: false })
   const [bybit,   setBybit]   = useState<ExchangePrice>({ price: null, connected: false })
   const [gate,    setGate]    = useState<ExchangePrice>({ price: null, connected: false })
-  const [bingx,   setBingX]   = useState<ExchangePrice>({ price: null, connected: false })
+  const [okx,     setOkx]     = useState<ExchangePrice>({ price: null, connected: false })
 
   useEffect(() => {
     if (!supported || !base) return
 
-    const sym   = `${base}USDT`
-    const symLo = sym.toLowerCase()
-    const gSym  = `${base}_USDT`
-    const bxSym = `${base}-USDT`
+    const sym    = `${base}USDT`
+    const symLo  = sym.toLowerCase()
+    const gSym   = `${base}_USDT`
+    const okxSym = `${base}-USDT`
 
     let cancelled = false
     let binanceWs: WebSocket | null = null
     let bybitWs:   WebSocket | null = null
     let gateWs:    WebSocket | null = null
-    let bingxWs:   WebSocket | null = null
-    let bD = 1000, byD = 1000, gD = 1000, bxD = 1000
+    let okxWs:     WebSocket | null = null
+    let bD = 1000, byD = 1000, gD = 1000, oD = 1000
     let bT: ReturnType<typeof setTimeout> | null = null
     let byT: ReturnType<typeof setTimeout> | null = null
     let gT:  ReturnType<typeof setTimeout> | null = null
-    let bxT: ReturnType<typeof setTimeout> | null = null
+    let oT:  ReturnType<typeof setTimeout> | null = null
 
     const connectBinance = () => {
       binanceWs = makeWs(
@@ -108,52 +108,30 @@ export function useCexPrices(symbol: string): CexPrices {
       )
     }
 
-    const connectBingX = () => {
-      const ws = new WebSocket('wss://open-api-ws.bingx.com/market')
-      bingxWs = ws
-      ws.onopen = () => {
-        bxD = 1000
-        setBingX({ price: null, connected: true })
-        ws.send(JSON.stringify({ id: Math.random().toString(36).slice(2), reqType: 'sub', dataType: `${bxSym}@lastPrice` }))
-      }
-      ws.onmessage = async (e) => {
-        try {
-          let text: string
-          if (e.data instanceof Blob) {
-            const buf = await e.data.arrayBuffer()
-            const ds  = new DecompressionStream('gzip')
-            const writer = ds.writable.getWriter()
-            writer.write(new Uint8Array(buf)); writer.close()
-            text = await new Response(ds.readable).text()
-          } else { text = e.data as string }
-          const d = JSON.parse(text)
-          if (d.ping) { ws.send(JSON.stringify({ pong: d.ping })); return }
-          const raw = d.data?.lastPrice ?? d.lastPrice ?? d.data?.c ?? d.c
-          const price = raw ? parseFloat(raw) : null
-          if (price != null && !isNaN(price) && price > 0) setBingX({ price, connected: true })
-        } catch { /* ignore */ }
-      }
-      ws.onerror = () => ws.close()
-      ws.onclose = () => {
-        setBingX(prev => ({ ...prev, connected: false }))
-        if (!cancelled) { bxT = setTimeout(connectBingX, bxD); bxD = Math.min(bxD * 2, 30_000) }
-      }
+    const connectOkx = () => {
+      okxWs = makeWs(
+        'wss://ws.okx.com:8443/ws/v5/public',
+        (ws) => { oD = 1000; ws.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId: okxSym }] })) },
+        (d) => d.data?.[0]?.last ? parseFloat(d.data[0].last) : null,
+        setOkx,
+        () => { if (!cancelled) { oT = setTimeout(connectOkx, oD); oD = Math.min(oD * 2, 30_000) } },
+      )
     }
 
-    connectBinance(); connectBybit(); connectGate(); connectBingX()
+    connectBinance(); connectBybit(); connectGate(); connectOkx()
 
     return () => {
       cancelled = true
-      ;[bT, byT, gT, bxT].forEach(t => t && clearTimeout(t))
-      binanceWs?.close(); bybitWs?.close(); gateWs?.close(); bingxWs?.close()
+      ;[bT, byT, gT, oT].forEach(t => t && clearTimeout(t))
+      binanceWs?.close(); bybitWs?.close(); gateWs?.close(); okxWs?.close()
     }
   }, [symbol, supported, base])
 
-  const prices = [binance.price, bybit.price, gate.price, bingx.price]
+  const prices = [binance.price, bybit.price, gate.price, okx.price]
     .filter((p): p is number => p !== null)
   const composite = prices.length > 0
     ? prices.reduce((a, b) => a + b, 0) / prices.length
     : null
 
-  return { binance, bybit, gate, bingx, composite, supported }
+  return { binance, bybit, gate, okx, composite, supported }
 }

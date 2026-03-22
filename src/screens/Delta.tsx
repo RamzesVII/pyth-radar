@@ -74,12 +74,12 @@ function MainChart({ composite, pythPrice, ciPct }: MainChartProps) {
     // Composite delta as baseline series (red above 0, green below 0)
     const series = chart.addSeries(BaselineSeries, {
       baseValue: { type: 'price', price: 0 },
-      topFillColor1:    'rgba(239,68,68,0.18)',
-      topFillColor2:    'rgba(239,68,68,0.03)',
-      topLineColor:     '#ef4444',
-      bottomFillColor1: 'rgba(34,197,94,0.03)',
-      bottomFillColor2: 'rgba(34,197,94,0.18)',
-      bottomLineColor:  '#22c55e',
+      topFillColor1:    'rgba(34,197,94,0.18)',
+      topFillColor2:    'rgba(34,197,94,0.03)',
+      topLineColor:     '#22c55e',
+      bottomFillColor1: 'rgba(239,68,68,0.03)',
+      bottomFillColor2: 'rgba(239,68,68,0.18)',
+      bottomLineColor:  '#ef4444',
       lineWidth: 2,
       lastValueVisible: false,
       priceLineVisible: false,
@@ -536,7 +536,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
           { key: 'Binance',       price: cex.binance.price },
           { key: 'Bybit',         price: cex.bybit.price },
           { key: 'Gate.io',       price: cex.gate.price },
-          { key: 'BingX',         price: cex.bingx.price },
+          { key: 'OKX',           price: cex.okx.price },
         ]
       : [
           { key: 'Composite',       price: composite },
@@ -562,7 +562,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
     pythPrice, ciPct,
     composite,
-    cex.binance.price, cex.bybit.price, cex.gate.price, cex.bingx.price,
+    cex.binance.price, cex.bybit.price, cex.gate.price, cex.okx.price,
     tradfi.gate.price, tradfi.binanceF.price, tradfi.okx.price,
   ])
 
@@ -610,8 +610,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                 <div>
                   <p className="text-slate-400 text-xs uppercase tracking-widest mb-0.5">Market Deviation</p>
                   <p className={`text-2xl font-bold font-mono ${
-                    Math.abs(compositeDelta) < 0.05 ? 'text-slate-300'
-                    : compositeDelta > 0 ? 'text-red-400' : 'text-emerald-400'
+                    compositeDelta > 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
                     {compositeDelta > 0 ? '+' : ''}{compositeDelta.toFixed(4)}%
                   </p>
@@ -686,7 +685,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                     <SparklineRow key={asset + '-binance'} label="Binance" price={cex.binance.price} pythPrice={p.price} ciPct={ciPct} connected={cex.binance.connected} />
                     <SparklineRow key={asset + '-bybit'}   label="Bybit"   price={cex.bybit.price}   pythPrice={p.price} ciPct={ciPct} connected={cex.bybit.connected} />
                     <SparklineRow key={asset + '-gate'}    label="Gate.io" price={cex.gate.price}    pythPrice={p.price} ciPct={ciPct} connected={cex.gate.connected} />
-                    <SparklineRow key={asset + '-bingx'}   label="BingX"   price={cex.bingx.price}   pythPrice={p.price} ciPct={ciPct} connected={cex.bingx.connected} />
+                    <SparklineRow key={asset + '-okx'}   label="OKX"   price={cex.okx.price}   pythPrice={p.price} ciPct={ciPct} connected={cex.okx.connected} />
                   </>
                 )}
                 {showTradFi && (
@@ -704,7 +703,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                     <div className="flex-1" />
                     <span className="text-slate-300 text-sm font-mono">${fmt(composite)}</span>
                     <span className={`text-sm font-mono font-semibold tabular-nums w-[4.5rem] text-right ${
-                      compositeDelta > 0 ? 'text-red-400' : 'text-emerald-400'
+                      compositeDelta > 0 ? 'text-emerald-400' : 'text-red-400'
                     }`}>
                       {compositeDelta > 0 ? '+' : ''}{compositeDelta.toFixed(4)}%
                     </span>
@@ -722,7 +721,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                     <ExchangeChart key={asset + '-binance'} label="Binance" price={cex.binance.price} pythPrice={p.price} ciPct={ciPct} connected={cex.binance.connected} />
                     <ExchangeChart key={asset + '-bybit'}   label="Bybit"   price={cex.bybit.price}   pythPrice={p.price} ciPct={ciPct} connected={cex.bybit.connected} />
                     <ExchangeChart key={asset + '-gate'}    label="Gate.io" price={cex.gate.price}    pythPrice={p.price} ciPct={ciPct} connected={cex.gate.connected} />
-                    <ExchangeChart key={asset + '-bingx'}   label="BingX"   price={cex.bingx.price}   pythPrice={p.price} ciPct={ciPct} connected={cex.bingx.connected} />
+                    <ExchangeChart key={asset + '-okx'}   label="OKX"   price={cex.okx.price}   pythPrice={p.price} ciPct={ciPct} connected={cex.okx.connected} />
                   </>
                 )}
                 {showTradFi && (
