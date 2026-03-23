@@ -59,10 +59,10 @@ function getLevel(score: number) {
 // ─── Category card ────────────────────────────────────────────────────────────
 
 const CATEGORIES: { key: string; icon: string }[] = [
-  { key: 'Crypto',      icon: '◈' },
-  { key: 'Forex',       icon: '↔' },
-  { key: 'Commodities', icon: '◆' },
-  { key: 'Equities',    icon: '▸' },
+  { key: 'Crypto',      icon: '⬡' },
+  { key: 'Forex',       icon: '⇄' },
+  { key: 'Commodities', icon: '◎' },
+  { key: 'Equities',    icon: '△' },
 ]
 
 interface CardProps {
@@ -82,12 +82,12 @@ function CategoryCard({ category, icon, score, movers, hasData, onClick }: CardP
       className={`glass text-left p-4 flex flex-col hover:bg-white/5 hover:scale-[1.02] transition-all duration-200 border ${hasData ? level.ring : 'border-slate-700/20'}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col mb-3">
         <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">
           {icon} {category}
         </span>
         {hasData && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium leading-none border ${level.ring} ${level.bg} ${level.color}`}>
+          <span className={`mt-1.5 self-start text-[10px] px-1.5 py-0.5 rounded font-medium leading-none border ${level.ring} ${level.bg} ${level.color}`}>
             {level.label}
           </span>
         )}
