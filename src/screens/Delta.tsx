@@ -734,6 +734,13 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                 )}
               </>
             )}
+
+            {/* Market hours note for equities */}
+            {category === 'Equities' && (
+              <p className="text-slate-600 text-xs mt-3 pt-3 border-t border-slate-800">
+                Equity prices update during market hours · Mon–Fri 09:30–16:00 ET
+              </p>
+            )}
           </div>
         ) : p ? (
           <div className="glass p-6 mb-4">
