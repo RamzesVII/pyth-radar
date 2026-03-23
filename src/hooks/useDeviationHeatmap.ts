@@ -3,7 +3,7 @@ import { FEED_CATEGORY } from './usePythPrices'
 
 // Curated shortlist — assets with independent market data for deviation
 export const DEVIATION_SYMBOLS: string[] = [
-  // Crypto (17)
+  // Crypto (18)
   'BTC/USD', 'ETH/USD', 'SOL/USD', 'BNB/USD', 'XRP/USD',
   'ADA/USD', 'AVAX/USD', 'DOGE/USD', 'LINK/USD', 'LTC/USD',
   'NEAR/USD', 'APT/USD', 'ARB/USD', 'OP/USD', 'SUI/USD',
