@@ -557,6 +557,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
       prevOutside.current[key] = isOut
     }
     if (newEvents.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEvents(prev => [...newEvents, ...prev].slice(0, 50))
     }
   }, [ // eslint-disable-line react-hooks/exhaustive-deps
