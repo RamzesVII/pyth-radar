@@ -693,7 +693,6 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                     {tradfi.has.gate     && <SparklineRow key={asset + '-gate'}     label="Gate.io"         price={tradfi.gate.price}     pythPrice={p.price} ciPct={ciPct} connected={tradfi.gate.connected} />}
                     {tradfi.has.binanceF && <SparklineRow key={asset + '-binancef'} label="Binance Futures" price={tradfi.binanceF.price} pythPrice={p.price} ciPct={ciPct} connected={tradfi.binanceF.connected} />}
                     {tradfi.has.okx      && <SparklineRow key={asset + '-okx'}      label="OKX"             price={tradfi.okx.price}      pythPrice={p.price} ciPct={ciPct} connected={tradfi.okx.connected} />}
-                    {tradfi.has.bitfinex && <SparklineRow key={asset + '-bitfinex'} label="Bitfinex"        price={tradfi.bitfinex.price} pythPrice={p.price} ciPct={ciPct} connected={tradfi.bitfinex.connected} />}
                   </>
                 )}
 
@@ -730,7 +729,6 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
                     {tradfi.has.gate     && <ExchangeChart key={asset + '-gate'}     label="Gate.io"         price={tradfi.gate.price}     pythPrice={p.price} ciPct={ciPct} connected={tradfi.gate.connected} />}
                     {tradfi.has.binanceF && <ExchangeChart key={asset + '-binancef'} label="Binance Futures" price={tradfi.binanceF.price} pythPrice={p.price} ciPct={ciPct} connected={tradfi.binanceF.connected} />}
                     {tradfi.has.okx      && <ExchangeChart key={asset + '-okx'}      label="OKX"             price={tradfi.okx.price}      pythPrice={p.price} ciPct={ciPct} connected={tradfi.okx.connected} />}
-                    {tradfi.has.bitfinex && <ExchangeChart key={asset + '-bitfinex'} label="Bitfinex"        price={tradfi.bitfinex.price} pythPrice={p.price} ciPct={ciPct} connected={tradfi.bitfinex.connected} />}
                   </>
                 )}
               </>
