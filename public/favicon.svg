@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
 
   <!-- Background -->
-  <rect width="100" height="100" fill="#141414"/>
+  <rect width="100" height="100" fill="#e8e8e8"/>
 
   <!-- Grid lines -->
-  <g stroke="rgba(255,255,255,0.10)" stroke-width="0.5">
+  <g stroke="rgba(0,0,0,0.10)" stroke-width="0.5">
     <line x1="10" y1="0"   x2="10"  y2="100"/>
     <line x1="20" y1="0"   x2="20"  y2="100"/>
     <line x1="30" y1="0"   x2="30"  y2="100"/>
@@ -25,27 +25,24 @@
     <line x1="0"  y1="90"  x2="100" y2="90"/>
   </g>
 
-  <!-- Radar sweep — wide glow (north → 60° clockwise) -->
-  <!-- North: (50,6)  60° CW from north: (88,28) -->
-  <path d="M50,50 L50,6 A44,44,0,0,1,88,28 Z" fill="rgba(255,255,255,0.07)"/>
+  <!-- Radar sweep — wide glow -->
+  <path d="M50,50 L50,6 A44,44,0,0,1,88,28 Z" fill="rgba(0,0,0,0.06)"/>
 
-  <!-- Radar sweep — bright edge near scan line (last ~20°) -->
-  <!-- 40° CW from north: (78,17) -->
-  <path d="M50,50 L78,17 A44,44,0,0,1,88,28 Z" fill="rgba(255,255,255,0.22)"/>
+  <!-- Radar sweep — bright edge near scan line -->
+  <path d="M50,50 L78,17 A44,44,0,0,1,88,28 Z" fill="rgba(0,0,0,0.16)"/>
 
   <!-- Concentric circles -->
-  <circle cx="50" cy="50" r="12" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
-  <circle cx="50" cy="50" r="22" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
-  <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="0.6"/>
-  <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="0.8"/>
+  <circle cx="50" cy="50" r="12" fill="none" stroke="rgba(0,0,0,0.20)" stroke-width="0.6"/>
+  <circle cx="50" cy="50" r="22" fill="none" stroke="rgba(0,0,0,0.20)" stroke-width="0.6"/>
+  <circle cx="50" cy="50" r="33" fill="none" stroke="rgba(0,0,0,0.22)" stroke-width="0.6"/>
+  <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,0.30)" stroke-width="0.8"/>
 
   <!-- Scan line -->
   <line x1="50" y1="50" x2="88" y2="28"
-        stroke="rgba(255,255,255,0.90)" stroke-width="1.2"/>
+        stroke="rgba(0,0,0,0.75)" stroke-width="1.2"/>
 
-  <!-- Pyth symbol — dark emboss in center -->
-  <!-- Original viewBox: 0 0 2155 2701 → scaled to ~22×27.5 units, centered at (50,50) -->
-  <g transform="translate(39,36) scale(0.0102)" fill="#0b0b0b">
+  <!-- Pyth symbol — dark in center -->
+  <g transform="translate(39,36) scale(0.0102)" fill="#1a1a1a">
     <path d="M1346.73 1080.28C1346.73 1229.44 1226.16 1350.38 1077.36 1350.38V1620.48C1374.83 1620.48 1616.1 1378.61 1616.1 1080.28C1616.1 781.953 1374.83 540.08 1077.36 540.08C979.295 540.08 887.193 566.36 807.988 612.471C646.902 705.79 538.618 880.381 538.618 1080.4V2430.9L807.988 2701V1080.4C807.988 931.238 928.56 810.301 1077.36 810.301C1226.16 810.301 1346.73 931.238 1346.73 1080.4V1080.28Z"/>
     <path d="M1077.48 0C881.231 0 697.271 52.6816 538.74 144.662C437.27 203.427 346.385 278.252 269.37 365.851C101.713 556.26 0 806.528 0 1080.4V1890.7L269.37 2160.8V1080.4C269.37 840.473 373.395 624.88 538.74 476.446C616.485 406.853 707.735 351.86 808.11 316.455C892.303 286.403 983.066 270.1 1077.48 270.1C1523.75 270.1 1885.47 632.91 1885.47 1080.4C1885.47 1527.89 1523.63 1890.7 1077.48 1890.7V2160.8C1672.55 2160.8 2154.84 1677.05 2154.84 1080.4C2154.84 483.746 1672.55 0 1077.48 0Z"/>
   </g>
