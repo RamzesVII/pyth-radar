@@ -42,9 +42,9 @@ Navigation state lives entirely in `App.tsx` (`screen` + `selectedAsset`).
 | Hook | Purpose | WebSocket endpoints |
 |------|---------|---------------------|
 | `usePythPrices` | All Pyth feeds — price + CI for 50+ assets | `wss://hermes.pyth.network/ws` |
-| `useCexPrices(symbol)` | Crypto spot — per-asset, opens on symbol change | Binance spot, Bybit spot, Gate.io spot, BingX perp |
-| `useTradFiPrices(symbol)` | Non-crypto — per-asset, opens on symbol change | Gate.io futures, Binance futures, BingX |
-| `useDeviationHeatmap` | Batched market prices for all 30 shortlist assets | Binance combined stream, Gate.io futures, BingX |
+| `useCexPrices(symbol)` | Crypto spot — per-asset, opens on symbol change | Binance spot, Bybit spot, Gate.io spot, OKX perp |
+| `useTradFiPrices(symbol)` | Non-crypto — per-asset, opens on symbol change | Gate.io futures, Binance futures, OKX |
+| `useDeviationHeatmap` | Batched market prices for all 30 shortlist assets | Binance combined stream, Gate.io futures, OKX, Gate.io spot (HYPE) |
 
 `usePythPrices` is a singleton — one WS subscribes to all 50+ feed IDs at once. The other hooks are per-symbol and close/reopen connections on symbol change.
 
@@ -62,21 +62,16 @@ Navigation state lives entirely in `App.tsx` (`screen` + `selectedAsset`).
 
 - `FEED_CATEGORY` (from `usePythPrices.ts`) maps symbol → `'Crypto' | 'Forex' | 'Commodities' | 'Equities'`
 - `CEX_SUPPORTED` (in `useCexPrices.ts`) — crypto-only map, Pyth symbol → base token
-- `TRADFI_MAP` (in `useTradFiPrices.ts`) — non-crypto map, Pyth symbol → `{ gate?, binanceF?, bingx? }`
+- `TRADFI_MAP` (in `useTradFiPrices.ts`) — non-crypto map, Pyth symbol → `{ gate?, binanceF?, okx? }`
 - `DEVIATION_SYMBOLS` (in `useDeviationHeatmap.ts`) — the 30-asset shortlist shown in Heatmap
 
-### BingX specifics
+### OKX specifics
 
-BingX WebSocket (`wss://open-api-ws.bingx.com/market`) sends **GZIP-compressed Blobs**. All `onmessage` handlers must decompress:
+OKX WebSocket (`wss://ws.okx.com:8443/ws/v5/public`) sends plain JSON. Subscribe with:
 ```ts
-const buf = await e.data.arrayBuffer()
-const ds  = new DecompressionStream('gzip')
-const writer = ds.writable.getWriter()
-writer.write(new Uint8Array(buf))
-writer.close()
-const text = await new Response(ds.readable).text()
+ws.send(JSON.stringify({ op: 'subscribe', args: [{ channel: 'tickers', instId: 'BTC-USDT-SWAP' }] }))
 ```
-Also requires ping/pong keepalive: respond to `{ ping: N }` with `{ pong: N }`.
+Price field: `data[0].last`. No compression, no ping/pong required.
 
 ### Styling
 

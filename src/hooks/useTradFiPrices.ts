@@ -18,7 +18,7 @@ const TRADFI_MAP: Record<string, TradFiSymbols> = {
   'MSFT/USD':  { gate: 'MSFT_USDT',   okx: 'MSFT-USDT-SWAP' },
   'NVDA/USD':  { gate: 'NVDAX_USDT',  okx: 'NVDA-USDT-SWAP' },
   'TSLA/USD':  { gate: 'TSLAX_USDT',  binanceF: 'tslausdt', okx: 'TSLA-USDT-SWAP' },
-  'AMZN/USD':  { gate: 'AMZNX_USDT',  binanceF: 'amznusdt', okx: 'AMZN-USDT-SWAP' },
+  'AMZN/USD':  { gate: 'AMZNX_USDT',  okx: 'AMZN-USDT-SWAP' },
   'GOOGL/USD': { gate: 'GOOGLX_USDT', okx: 'GOOGL-USDT-SWAP' },
   'META/USD':  { gate: 'METAX_USDT',  okx: 'META-USDT-SWAP' },
 }
