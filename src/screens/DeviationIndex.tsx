@@ -223,7 +223,7 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
             />
             <p className="text-[10px] tracking-[0.2em] uppercase text-slate-500 font-semibold mb-1">Deviation Index</p>
             <p className="text-slate-400 text-[13px] font-medium mb-0.5">Pyth price is the benchmark</p>
-            <p className="text-[11px] text-slate-500 mb-6">{DEVIATION_SYMBOLS.length} assets · 4 exchanges · live</p>
+            <p className="text-[11px] text-slate-500 mb-6">{DEVIATION_SYMBOLS.length} assets · multi-source · live</p>
 
             <div className={`relative flex flex-col items-center justify-center w-[168px] h-[168px] rounded-full border-2 ${globalLevel.ring} ${globalLevel.bg} pulse-ring mb-5`}>
               <div className="absolute inset-[6px] rounded-full border border-white/5" />

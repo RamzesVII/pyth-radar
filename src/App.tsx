@@ -71,7 +71,7 @@ function App() {
           <div className="flex items-center gap-2">
             <span className={`w-1.5 h-1.5 rounded-full transition-colors ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
               style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}} />
-            {connected ? 'Live' : 'Connecting…'}
+            {connected ? 'Pyth live' : 'Connecting…'}
           </div>
         </div>
       </nav>

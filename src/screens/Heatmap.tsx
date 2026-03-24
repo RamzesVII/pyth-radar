@@ -51,7 +51,7 @@ export default function Heatmap({ prices, connected, marketPrices, onSelectAsset
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400' : 'bg-slate-600'}`}
               style={connected ? { boxShadow: '0 0 6px rgba(52,211,153,0.8)' } : {}} />
-            {connected ? `${DEVIATION_SYMBOLS.filter(s => prices[s]).length}/${DEVIATION_SYMBOLS.length} live` : 'Connecting…'}
+            {connected ? `${DEVIATION_SYMBOLS.filter(s => prices[s]).length}/${DEVIATION_SYMBOLS.length} Pyth feeds` : 'Connecting…'}
           </div>
         </div>
 
