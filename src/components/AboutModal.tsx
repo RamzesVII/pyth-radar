@@ -26,8 +26,9 @@ export default function AboutModal({ onClose }: Props) {
         <h2 className="text-slate-100 text-lg font-semibold mb-3">Pyth Radar</h2>
 
         <p className="text-slate-400 text-sm leading-relaxed mb-3">
-          Pyth aggregates prices from institutional market makers — Citadel, Jane Street, Jump Trading.
-          That makes Pyth the benchmark, not a price to be verified.
+          Pyth Network publishes institutional-grade price data aggregated from
+          first-party market makers. That makes Pyth the benchmark —
+          the reference point that markets are measured against.
         </p>
         <p className="text-slate-400 text-sm leading-relaxed">
           Pyth Radar shows where CEX markets deviate from that benchmark in real time,

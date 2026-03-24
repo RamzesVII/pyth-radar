@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pyth Radar — Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background-color: #050507;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(120,40,200,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(30,80,200,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(80,20,160,0.08) 0%, transparent 70%);
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e2e8f0;
+  }
+
+  /* NAV */
+  nav {
+    height: 56px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(5,5,7,0.7);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-size: 15px; font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 10px; }
+  .nav-tabs { display: flex; gap: 2px; }
+  .nav-tab { padding: 6px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: #475569; }
+  .nav-tab.active { background: rgba(167,139,250,0.12); color: #a78bfa; }
+  .live-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #475569; }
+  .dot-green { width: 6px; height: 6px; border-radius: 50%; background: #34d399; box-shadow: 0 0 6px rgba(52,211,153,0.8); }
+
+  /* PAGE — centered, max width */
+  .page {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 56px 32px 60px; min-height: calc(100vh - 56px);
+  }
+
+  /* ── MAIN LAYOUT: hero left, panel right ── */
+  .main-row {
+    display: flex; gap: 20px; align-items: flex-start;
+    width: 100%; max-width: 960px;
+  }
+
+  /* LEFT — hero card */
+  .glass-strong {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.10) inset,
+      0 0 0 0.5px rgba(255,255,255,0.04) inset,
+      0 24px 48px rgba(0,0,0,0.45);
+  }
+  .hero {
+    flex: 0 0 300px;
+    padding: 40px 32px 36px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute;
+    width: 280px; height: 280px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.07) 0%, transparent 70%);
+    top: -80px; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .hero-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #475569; font-weight: 600; margin-bottom: 4px; }
+  .hero-tagline { font-size: 13px; color: #94a3b8; font-weight: 500; margin-bottom: 2px; }
+  .hero-meta { font-size: 11px; color: #475569; margin-bottom: 24px; }
+
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.95); opacity: 0.6; }
+    50%  { transform: scale(1.05); opacity: 0.2; }
+    100% { transform: scale(0.95); opacity: 0.6; }
+  }
+  .score-ring {
+    width: 168px; height: 168px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin-bottom: 20px; position: relative;
+    animation: pulse-ring 2.5s ease-in-out infinite;
+  }
+  .score-ring::before {
+    content: ''; position: absolute; inset: 6px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .score-num { font-size: 68px; font-weight: 800; line-height: 1; }
+  .score-denom { font-size: 12px; color: #475569; margin-top: 4px; }
+
+  .status-pill {
+    display: inline-flex; align-items: center;
+    padding: 6px 20px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+    margin-bottom: 20px;
+  }
+  .hero-status { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #334155; }
+
+  /* LAYOUT wrapper: header row + main row stacked */
+  .layout {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; max-width: 960px;
+  }
+  .layout-header {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .hero-spacer { flex: 0 0 300px; width: 300px; } /* mirrors hero width */
+
+  /* RIGHT PANEL — ~285px per card */
+  .right-panel {
+    flex: 0 0 580px;
+    display: flex; flex-direction: column;
+  }
+
+  /* Radar wrapper card — same glass as hero */
+  .radar-card {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    flex: 1;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-label {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: #334155; font-weight: 500;
+  }
+
+  /* VIEW TOGGLE */
+  .view-toggle {
+    display: flex; gap: 2px;
+    background: rgba(255,255,255,0.04); border-radius: 10px; padding: 3px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .toggle-btn {
+    padding: 5px 16px; border-radius: 7px; font-size: 11px; font-weight: 500;
+    cursor: pointer; border: none; background: none; color: #475569;
+    transition: all 0.15s;
+  }
+  .toggle-btn.active {
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: #cbd5e1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* ── CARDS 2×2 ── */
+  #view-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  /* Radar card fixed to same height as 2×2 grid */
+  #view-radar { display: none; height: calc(2 * 190px + 10px); }
+
+  .cat-card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 16px;
+    height: 190px;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset;
+  }
+  .cat-card:hover { background: rgba(255,255,255,0.07); transform: scale(1.02); }
+
+  .cat-header { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
+  .cat-name { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #475569; font-weight: 500; }
+  .cat-badge {
+    align-self: flex-start; padding: 2px 8px; border-radius: 4px;
+    font-size: 9px; font-weight: 600; border: 1px solid;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .cat-score { font-size: 48px; font-weight: 700; line-height: 1; margin: 8px 0 auto; }
+  .cat-mover { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
+  .cat-mover-sym { font-size: 11px; color: #64748b; }
+  .cat-mover-delta { font-size: 11px; font-family: monospace; font-weight: 600; }
+
+  /* Level colors */
+  .calm   { color: #34d399; }
+  .elev   { color: #fbbf24; }
+  .stress { color: #fb923c; }
+  .crit   { color: #f87171; }
+
+  .calm-border   { border-color: rgba(16,185,129,0.25);  background: rgba(16,185,129,0.10);  }
+  .elev-border   { border-color: rgba(234,179,8,0.25);   background: rgba(234,179,8,0.10);   }
+  .stress-border { border-color: rgba(249,115,22,0.25);  background: rgba(249,115,22,0.10);  }
+  .crit-border   { border-color: rgba(239,68,68,0.25);   background: rgba(239,68,68,0.10);   }
+
+  .ring-elev   { border: 2px solid rgba(234,179,8,0.25);  background: rgba(234,179,8,0.10); }
+  .ring-calm   { border: 2px solid rgba(16,185,129,0.25); background: rgba(16,185,129,0.10); }
+  .ring-stress { border: 2px solid rgba(249,115,22,0.25); background: rgba(249,115,22,0.10); }
+  .ring-crit   { border: 2px solid rgba(239,68,68,0.25);  background: rgba(239,68,68,0.10); }
+
+  /* CTA */
+  .cta {
+    font-size: 13px; color: #334155;
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; letter-spacing: 0.04em;
+    transition: color 0.15s; margin-top: 8px;
+  }
+  .cta:hover { color: #a78bfa; }
+
+  .footer { font-size: 11px; color: #1e293b; text-align: center; margin-top: 24px; }
+  .footer a { color: inherit; text-decoration: none; }
+  .footer a:hover { color: #475569; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <svg width="16" height="21" viewBox="0 0 2155 2701" fill="none">
+      <path d="M1346.73 1080.28C1346.73 1229.44 1226.16 1350.38 1077.36 1350.38V1620.48C1374.83 1620.48 1616.1 1378.61 1616.1 1080.28C1616.1 781.953 1374.83 540.08 1077.36 540.08C979.295 540.08 887.193 566.36 807.988 612.471C646.902 705.79 538.618 880.381 538.618 1080.4V2430.9L807.988 2701V1080.4C807.988 931.238 928.56 810.301 1077.36 810.301C1226.16 810.301 1346.73 931.238 1346.73 1080.4V1080.28Z" fill="white"/>
+      <path d="M1077.48 0C881.231 0 697.271 52.6816 538.74 144.662C437.27 203.427 346.385 278.252 269.37 365.851C101.713 556.26 0 806.528 0 1080.4V1890.7L269.37 2160.8V1080.4C269.37 840.473 373.395 624.88 538.74 476.446C616.485 406.853 707.735 351.86 808.11 316.455C892.303 286.403 983.066 270.1 1077.48 270.1C1523.75 270.1 1885.47 632.91 1885.47 1080.4C1885.47 1527.89 1523.63 1890.7 1077.48 1890.7V2160.8C1672.55 2160.8 2154.84 1677.05 2154.84 1080.4C2154.84 483.746 1672.55 0 1077.48 0Z" fill="white"/>
+    </svg>
+    Pyth Radar
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active">Overview</button>
+    <button class="nav-tab">Heatmap</button>
+    <button class="nav-tab">Delta</button>
+  </div>
+  <div class="live-pill"><div class="dot-green"></div> Pyth live</div>
+</nav>
+
+<div class="page">
+  <div class="layout">
+
+    <!-- TOP ROW: spacer + header/toggle above right panel -->
+    <div class="layout-header">
+      <div class="hero-spacer"></div>
+      <div class="panel-header">
+        <span class="section-label">By Asset Class · Market Deviation from Pyth</span>
+        <div class="view-toggle">
+          <button class="toggle-btn" onclick="setView('radar')">◈ Radar</button>
+          <button class="toggle-btn active" onclick="setView('cards')">⊞ Cards</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN ROW: hero | cards/radar, perfectly aligned -->
+    <div class="main-row">
+
+      <!-- LEFT: hero score card -->
+      <div class="hero glass-strong" style="box-shadow: 0 0 40px rgba(251,191,36,0.12), 0 1px 0 rgba(255,255,255,0.10) inset, 0 24px 48px rgba(0,0,0,0.45);">
+        <p class="hero-label">Deviation Index</p>
+        <p class="hero-tagline">Pyth price is the benchmark</p>
+        <p class="hero-meta">30 assets · 5 exchanges · live</p>
+
+        <div class="score-ring ring-elev">
+          <span class="score-num elev">46</span>
+          <span class="score-denom">/100</span>
+        </div>
+
+        <div class="status-pill elev-border elev">Elevated</div>
+
+        <div class="hero-status">
+          <div class="dot-green"></div>
+          30/30 assets · Pyth live
+        </div>
+      </div>
+
+      <!-- RIGHT: cards or radar, no header inside -->
+      <div class="right-panel">
+
+      <!-- CARDS 2×2 -->
+      <div id="view-cards">
+
+        <div class="cat-card" style="border-color:rgba(234,179,8,0.25)">
+          <div class="cat-header">
+            <span class="cat-name">⬡ Crypto</span>
+            <span class="cat-badge elev elev-border">Elevated</span>
+          </div>
+          <span class="cat-score elev">58</span>
+          <div class="cat-mover"><span class="cat-mover-sym">BTC</span><span class="cat-mover-delta" style="color:#34d399">+0.042%</span></div>
+          <div class="cat-mover"><span class="cat-mover-sym">SOL</span><span class="cat-mover-delta" style="color:#f87171">−0.031%</span></div>
+        </div>
+
+        <div class="cat-card" style="border-color:rgba(249,115,22,0.25)">
+          <div class="cat-header">
+            <span class="cat-name">△ Equities</span>
+            <span class="cat-badge stress stress-border">Stressed</span>
+          </div>
+          <span class="cat-score stress">72</span>
+          <div class="cat-mover"><span class="cat-mover-sym">NVDA</span><span class="cat-mover-delta" style="color:#34d399">+0.118%</span></div>
+          <div class="cat-mover"><span class="cat-mover-sym">TSLA</span><span class="cat-mover-delta" style="color:#f87171">−0.094%</span></div>
+        </div>
+
+        <div class="cat-card" style="border-color:rgba(16,185,129,0.25)">
+          <div class="cat-header">
+            <span class="cat-name">◎ Commodities</span>
+            <span class="cat-badge calm calm-border">Calm</span>
+          </div>
+          <span class="cat-score calm">18</span>
+          <div class="cat-mover"><span class="cat-mover-sym">XAU</span><span class="cat-mover-delta" style="color:#34d399">+0.009%</span></div>
+          <div class="cat-mover"><span class="cat-mover-sym">WTI</span><span class="cat-mover-delta" style="color:#f87171">−0.006%</span></div>
+        </div>
+
+        <div class="cat-card" style="border-color:rgba(234,179,8,0.25)">
+          <div class="cat-header">
+            <span class="cat-name">⇄ Forex</span>
+            <span class="cat-badge elev elev-border">Elevated</span>
+          </div>
+          <span class="cat-score elev">34</span>
+          <div class="cat-mover"><span class="cat-mover-sym">EUR/USD</span><span class="cat-mover-delta" style="color:#f87171">−0.021%</span></div>
+          <div class="cat-mover"><span class="cat-mover-sym">GBP/USD</span><span class="cat-mover-delta" style="color:#34d399">+0.014%</span></div>
+        </div>
+
+      </div>
+
+      <!-- RADAR wrapped in glass card -->
+      <div id="view-radar" class="radar-card">
+        <svg width="100%" height="100%" viewBox="0 80 500 340" style="min-height:300px">
+          <defs>
+            <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <linearGradient id="fill-grad" x1="0.5" y1="0" x2="0.5" y2="1">
+              <stop offset="0%" stop-color="rgba(234,179,8,0.22)"/>
+              <stop offset="100%" stop-color="rgba(234,179,8,0.06)"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Center 250,250 · Max radius 130 -->
+          <polygon points="250,218 282,250 250,282 218,250" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+          <polygon points="250,185 315,250 250,315 185,250" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>
+          <polygon points="250,152 348,250 250,348 152,250" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <polygon points="250,120 380,250 250,380 120,250" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="5,4"/>
+
+          <line x1="250" y1="250" x2="250" y2="120" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <line x1="250" y1="250" x2="380" y2="250" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <line x1="250" y1="250" x2="250" y2="380" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+          <line x1="250" y1="250" x2="120" y2="250" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+          <!--
+            Crypto=58   top:    250, 250 − 0.58×130 = 250, 175
+            Equities=72 right:  250 + 0.72×130, 250 = 344, 250
+            Commod=18   bottom: 250, 250 + 0.18×130 = 250, 273
+            Forex=34    left:   250 − 0.34×130, 250 = 206, 250
+          -->
+          <polygon
+            points="250,175 344,250 250,273 206,250"
+            fill="url(#fill-grad)"
+            stroke="rgba(234,179,8,0.55)"
+            stroke-width="1.5" stroke-linejoin="round"
+            filter="url(#glow)"
+          />
+
+          <circle cx="250" cy="175" r="5" fill="#c084fc" stroke="#050507" stroke-width="2.5" filter="url(#glow)"/>
+          <circle cx="344" cy="250" r="5" fill="#fb923c" stroke="#050507" stroke-width="2.5" filter="url(#glow)"/>
+          <circle cx="250" cy="273" r="5" fill="#34d399" stroke="#050507" stroke-width="2.5" filter="url(#glow)"/>
+          <circle cx="206" cy="250" r="5" fill="#fbbf24" stroke="#050507" stroke-width="2.5" filter="url(#glow)"/>
+          <circle cx="250" cy="250" r="3" fill="rgba(255,255,255,0.15)"/>
+
+          <text x="250" y="101" text-anchor="middle" font-size="9" fill="#64748b" font-family="system-ui,sans-serif" font-weight="600" letter-spacing="0.12em">⬡ CRYPTO</text>
+          <text x="250" y="116" text-anchor="middle" font-size="16" font-weight="700" fill="#c084fc" font-family="system-ui,sans-serif">58</text>
+
+          <text x="394" y="245" text-anchor="start" font-size="9" fill="#64748b" font-family="system-ui,sans-serif" font-weight="600" letter-spacing="0.1em">△ EQUITIES</text>
+          <text x="394" y="261" text-anchor="start" font-size="16" font-weight="700" fill="#fb923c" font-family="system-ui,sans-serif">72</text>
+
+          <text x="250" y="400" text-anchor="middle" font-size="9" fill="#64748b" font-family="system-ui,sans-serif" font-weight="600" letter-spacing="0.1em">◎ COMMODITIES</text>
+          <text x="250" y="416" text-anchor="middle" font-size="16" font-weight="700" fill="#34d399" font-family="system-ui,sans-serif">18</text>
+
+          <text x="106" y="245" text-anchor="end" font-size="9" fill="#64748b" font-family="system-ui,sans-serif" font-weight="600" letter-spacing="0.1em">FOREX ⇄</text>
+          <text x="106" y="261" text-anchor="end" font-size="16" font-weight="700" fill="#fbbf24" font-family="system-ui,sans-serif">34</text>
+        </svg>
+      </div>
+
+      </div><!-- /right-panel -->
+
+    </div><!-- /main-row -->
+
+    <div class="cta" style="align-self:center">Scan 30 Assets →</div>
+
+  </div><!-- /layout -->
+
+  <p class="footer">Powered by <a href="#">Pyth Network</a></p>
+</div>
+
+<script>
+function setView(v) {
+  document.getElementById('view-radar').style.display = v === 'radar' ? 'flex' : 'none';
+  document.getElementById('view-cards').style.display = v === 'cards' ? 'grid' : 'none';
+  // keep right-panel flex column sizing correct
+  document.querySelector('.right-panel').style.flexDirection = 'column';
+  document.querySelectorAll('.toggle-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && v === 'radar') || (i === 1 && v === 'cards'));
+  });
+}
+</script>
+</body>
+</html>
