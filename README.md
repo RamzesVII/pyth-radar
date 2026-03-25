@@ -8,6 +8,8 @@ Pyth Radar makes that signal visible in real time across **30 assets**: crypto, 
 
 Built for the [Pyth Community Hackathon 2026](https://dev-forum.pyth.network/t/pyth-community-hackathon/548).
 
+**Live demo:** https://pyth-radar.vercel.app
+
 **Target audience:** HFT traders, arbitrageurs, DeFi risk managers, oracle researchers.
 
 ---
@@ -15,7 +17,7 @@ Built for the [Pyth Community Hackathon 2026](https://dev-forum.pyth.network/t/p
 ## Three screens
 
 ### 1. Deviation Index
-A 0–100 oracle stress score computed from Pyth confidence intervals vs real market prices. Broken down by asset class (Crypto / Forex / Commodities / Equities) with top movers. One number answers: *how much is the market diverging from the institutional benchmark right now?*
+A 0–100 oracle stress score computed across 30 assets. Toggle between a **radar chart** (4-axis diamond by asset class) and **category cards** (Crypto / Forex / Commodities / Equities) with per-category scores and top movers. One number answers: *how much is the market diverging from the institutional benchmark right now?*
 
 ### 2. Deviation Heatmap
 A visual grid of 30 assets colored by deviation magnitude — green (in line) to red (diverging). Border color shows CI stress independently. Tabs: All / Crypto / Forex / Commodities / Equities. Click any asset to inspect.
