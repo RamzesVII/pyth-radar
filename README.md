@@ -2,15 +2,25 @@
 
 **Pyth is the benchmark. The market is the variable.**
 
-Pyth aggregates prices from institutional providers — Citadel, Jane Street, Jump Trading. When a CEX diverges from Pyth, it's a signal: arbitrage opportunity, liquidation hunt, latency lag, or manipulation.
+Pyth aggregates prices from institutional providers — Citadel, Jane Street, Jump Trading and etc. When a CEX diverges from Pyth, it's a signal: arbitrage opportunity, liquidation hunt, latency lag, or manipulation.
 
-Pyth Radar makes that signal visible in real time across **30 assets**: crypto, forex, commodities, and equities.
+Pyth Radar makes that signal visible in real time across **30 assets**: crypto, forex, commodities and equities.
 
 Built for the [Pyth Community Hackathon 2026](https://dev-forum.pyth.network/t/pyth-community-hackathon/548).
 
 **Live demo:** https://pyth-radar.vercel.app
 
 **Target audience:** HFT traders, arbitrageurs, DeFi risk managers, oracle researchers.
+
+---
+
+## Key concept: Confidence Interval
+
+Every Pyth price comes with a **confidence interval (CI)** — a range published by the oracle that represents uncertainty in the current price. A tight CI (e.g. ±0.01%) means high agreement among data providers. A wide CI (e.g. ±14%) signals low liquidity, market closure, or disagreement.
+
+Pyth Radar uses CI as a signal threshold:
+- **Deviation inside CI** = noise — the market is within normal uncertainty bounds
+- **Deviation outside CI** = potential signal — the market is meaningfully diverging from the institutional benchmark
 
 ---
 
