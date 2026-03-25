@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import AboutModal from './components/AboutModal'
 import { usePythPrices } from './hooks/usePythPrices'
 import { useDeviationHeatmap } from './hooks/useDeviationHeatmap'
@@ -84,6 +85,7 @@ function App() {
         {screen === 'heatmap' && <Heatmap   prices={prices} connected={connected} marketPrices={marketPrices} onSelectAsset={openDelta} />}
         {screen === 'delta'   && <Delta key={selectedAsset} asset={selectedAsset} prices={prices} pythConnected={connected} />}
       </div>
+      <Analytics />
     </div>
   )
 }
