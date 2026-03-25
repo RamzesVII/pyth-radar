@@ -33,7 +33,7 @@ Per-asset deep dive: Pyth benchmark price vs live exchange prices. Shows delta %
 | Bybit spot | ✅ | — | — | — | — |
 | Gate.io spot | ✅ (HYPE) | — | — | — | — |
 | Gate.io futures | — | ✅ | ✅ | — | ✅ |
-| Binance futures | — | ✅ XAU/XAG | — | — | ✅ TSLA/AMZN |
+| Binance futures | — | ✅ XAU/XAG | — | — | ✅ TSLA |
 | OKX | ✅ | ✅ XAU/XAG | — | ✅ WTI | — |
 
 **Composite price** = arithmetic mean of all available sources per asset. Metals (XAU/XAG) use 3-source composite for higher confidence.
@@ -67,19 +67,3 @@ Per-asset deep dive: Pyth benchmark price vs live exchange prices. Shows delta %
 - Pyth Hermes WebSocket (`wss://hermes.pyth.network/ws`) — live prices + confidence intervals
 - All exchange data via public unauthenticated WebSocket endpoints
 
----
-
-## Run locally
-
-```bash
-npm install
-npm run dev
-# open http://localhost:5173
-```
-
-## Build
-
-```bash
-npm run build   # TypeScript check + Vite bundle
-npm run lint    # ESLint
-```

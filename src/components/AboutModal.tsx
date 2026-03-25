@@ -25,14 +25,17 @@ export default function AboutModal({ onClose }: Props) {
 
         <h2 className="text-slate-100 text-lg font-semibold mb-3">Pyth Radar</h2>
 
-        <p className="text-slate-400 text-sm leading-relaxed mb-3">
-          Pyth Network publishes institutional-grade price data aggregated from
-          first-party market makers. That makes Pyth the benchmark —
-          the reference point that markets are measured against.
+        <p className="text-slate-400 text-sm leading-relaxed mb-1">
+          Pyth Network publishes institutional-grade price data aggregated from first-party market makers.
         </p>
-        <p className="text-slate-400 text-sm leading-relaxed">
+        <p className="text-slate-300 text-sm leading-relaxed mb-3">
+          That makes Pyth the benchmark — the reference point that markets are measured against.
+        </p>
+        <p className="text-slate-400 text-sm leading-relaxed mb-1">
           Pyth Radar shows where CEX markets deviate from that benchmark in real time,
-          using Pyth's confidence interval as the signal threshold —
+          using Pyth's confidence interval as the signal threshold:
+        </p>
+        <p className="text-slate-300 text-sm leading-relaxed">
           deviation inside CI is noise, deviation outside is opportunity.
         </p>
 

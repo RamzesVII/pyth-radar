@@ -597,7 +597,7 @@ export default function Delta({ asset, prices, pythConnected }: Props) {
               <div>
                 <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Pyth Benchmark Price</p>
                 <p className="text-4xl font-bold text-slate-100">${fmtPrice(p.price)}</p>
-                <p className="text-slate-500 text-xs mt-2">Institutional aggregate · Citadel, Jane Street, Jump</p>
+                <p className="text-slate-500 text-xs mt-2">First-party data · institutional grade</p>
               </div>
               <div className="text-right">
                 <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Confidence Interval</p>
