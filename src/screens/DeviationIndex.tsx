@@ -348,7 +348,7 @@ export default function DeviationIndex({ prices, connected, marketPrices, onOpen
       {/* Footer */}
       <p className="mt-6 text-slate-700 text-xs">
         Powered by{' '}
-        <a href="https://pyth.network" target="_blank" rel="noopener noreferrer"
+        <a href="https://www.pyth.network" target="_blank" rel="noopener noreferrer"
            className="hover:text-slate-500 transition-colors">
           Pyth Network
         </a>
